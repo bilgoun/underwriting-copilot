@@ -1,0 +1,17 @@
+[Unit]
+Description=Softmax Underwriting Celery Worker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=softmax
+WorkingDirectory=/opt/softmax
+Environment=TMPDIR=/mnt/softmax_tmp
+Environment=REDIS_URL=rediss://...
+Environment=DATABASE_URL=postgresql+psycopg://...
+ExecStart=/opt/venv/bin/celery -A app.workers.celery_app.celery_app worker -l INFO -c 12 --prefetch-multiplier=1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: softmax-uw-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: softmax-uw-worker
+  template:
+    metadata:
+      labels:
+        app: softmax-uw-worker
+    spec:
+      containers:
+        - name: worker
+          image: ghcr.io/softmax/underwriting-worker:latest
+          command: ["celery", "-A", "app.workers.celery_app.celery_app", "worker", "-l", "INFO", "-c", "12", "--prefetch-multiplier=1"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: softmax-uw-secrets
+                  key: database_url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: softmax-uw-secrets
+                  key: redis_url
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: softmax-uw-secrets
+                  key: encryption_key
+            - name: SANDBOX_MODE
+              value: "false"

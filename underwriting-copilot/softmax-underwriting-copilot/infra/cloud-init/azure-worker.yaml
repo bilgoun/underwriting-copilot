@@ -1,0 +1,52 @@
+#cloud-config
+users:
+  - name: softmax
+    groups: [sudo]
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"]
+    shell: /bin/bash
+package_update: true
+package_upgrade: true
+packages:
+  - python3-pip
+  - python3-venv
+  - git
+  - build-essential
+
+runcmd:
+  - mkdir -p /opt/softmax
+  - python3 -m venv /opt/venv
+  - /opt/venv/bin/pip install --upgrade pip
+  - /opt/venv/bin/pip install -r /opt/softmax/requirements.txt
+  - mkdir -p /mnt/softmax_tmp
+  - chown softmax:softmax /mnt/softmax_tmp
+  - systemctl daemon-reload
+  - systemctl enable softmax-uw-worker.service
+  - systemctl start softmax-uw-worker.service
+
+write_files:
+  - path: /etc/systemd/system/softmax-uw-worker.service
+    content: |
+      [Unit]
+      Description=Softmax Underwriting Celery Worker
+      After=network-online.target
+      Wants=network-online.target
+
+      [Service]
+      User=softmax
+      WorkingDirectory=/opt/softmax
+      Environment=TMPDIR=/mnt/softmax_tmp
+      EnvironmentFile=/etc/softmax/worker.env
+      ExecStart=/opt/venv/bin/celery -A app.workers.celery_app.celery_app worker -l INFO -c 12 --prefetch-multiplier=1
+      Restart=always
+      RestartSec=5
+
+      [Install]
+      WantedBy=multi-user.target
+  - path: /etc/softmax/worker.env
+    content: |
+      DATABASE_URL=
+      REDIS_URL=
+      ENCRYPTION_KEY=
+      SANDBOX_MODE=false
+    owner: softmax:softmax
+    permissions: '0600'

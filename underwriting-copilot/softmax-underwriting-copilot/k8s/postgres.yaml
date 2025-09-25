@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: softmax-postgres
+spec:
+  serviceName: softmax-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: softmax-postgres
+  template:
+    metadata:
+      labels:
+        app: softmax-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: softmax-uw-secrets
+                  key: postgres_password
+            - name: POSTGRES_DB
+              value: softmax
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: softmax-postgres
+spec:
+  selector:
+    app: softmax-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

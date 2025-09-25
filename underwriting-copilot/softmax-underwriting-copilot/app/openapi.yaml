@@ -1,0 +1,371 @@
+openapi: 3.1.0
+info:
+  title: Softmax Underwriting Copilot
+  version: "0.1.0"
+  description: |
+    Underwriting ingest API for Softmax banks/fintech partners.
+servers:
+  - url: https://api.softmax.mn
+  - url: https://sandbox.softmax.mn
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+    OAuth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: /oauth/token
+          scopes:
+            underwrite:create: Create underwriting jobs
+            underwrite:read: Read underwriting jobs
+  schemas:
+    CanonicalPayload:
+      type: object
+      required:
+        - job_id
+        - tenant_id
+        - applicant
+        - loan
+        - consent_artifact
+        - third_party_data
+        - documents
+        - collateral
+        - callback_url
+      properties:
+        job_id:
+          type: string
+        tenant_id:
+          type: string
+        applicant:
+          type: object
+          required: [citizen_id, full_name, phone]
+          properties:
+            citizen_id:
+              type: string
+            full_name:
+              type: string
+            phone:
+              type: string
+        loan:
+          type: object
+          required: [type, amount, term_months]
+          properties:
+            type:
+              type: string
+            amount:
+              type: integer
+            term_months:
+              type: integer
+        consent_artifact:
+          type: object
+          required: [provider, reference, scopes, issued_at, expires_at, hash]
+          properties:
+            provider:
+              type: string
+            reference:
+              type: string
+            scopes:
+              type: array
+              items:
+                type: string
+            issued_at:
+              type: string
+              format: date-time
+            expires_at:
+              type: string
+              format: date-time
+            hash:
+              type: string
+        third_party_data:
+          type: object
+          additionalProperties: true
+        documents:
+          type: object
+          required: [bank_statement_url, bank_statement_period]
+          properties:
+            bank_statement_url:
+              type: string
+              format: uri
+            bank_statement_period:
+              type: object
+              required: [from, to]
+              properties:
+                from:
+                  type: string
+                  format: date
+                to:
+                  type: string
+                  format: date
+        collateral:
+          type: object
+          additionalProperties: true
+        callback_url:
+          type: string
+          format: uri
+    UnderwriteAccepted:
+      type: object
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, processing, succeeded, failed]
+    JobResult:
+      type: object
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+        client_job_id:
+          type: string
+        decision:
+          type: string
+        risk_score:
+          type: number
+        interest_rate_suggestion:
+          type: number
+        memo_markdown:
+          type: string
+        memo_pdf_url:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    WebhookTestRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+    PollingPullRequest:
+      type: object
+      properties:
+        max_jobs:
+          type: integer
+          minimum: 1
+          default: 1
+    PollingPullResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            type: object
+            properties:
+              job_id:
+                type: string
+              payload:
+                type: object
+                additionalProperties: true
+    PollingCompleteRequest:
+      type: object
+      required: [job_id, status]
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+        decision:
+          type: string
+        interest_rate_suggestion:
+          type: number
+        risk_score:
+          type: number
+        memo_markdown:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    OAuthTokenRequest:
+      type: object
+      required: [grant_type, client_id, client_secret]
+      properties:
+        grant_type:
+          type: string
+          enum: [client_credentials]
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        scope:
+          type: string
+    OAuthTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          default: bearer
+        expires_in:
+          type: integer
+        scope:
+          type: string
+paths:
+  /oauth/token:
+    post:
+      tags: [auth]
+      summary: Issue OAuth2 client credentials token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OAuthTokenRequest'
+      responses:
+        '200':
+          description: Access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthTokenResponse'
+        '400':
+          description: Invalid grant
+        '401':
+          description: Invalid client credentials
+  /v1/underwrite:
+    post:
+      tags: [underwriting]
+      summary: Queue underwriting job
+      security:
+        - ApiKeyAuth: []
+        - OAuth2ClientCredentials:
+            - underwrite:create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CanonicalPayload'
+      responses:
+        '202':
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnderwriteAccepted'
+        '401':
+          description: Authentication or signature failure
+        '409':
+          description: Duplicate submission
+  /v1/jobs/{job_id}:
+    get:
+      tags: [jobs]
+      summary: Get underwriting job status
+      security:
+        - ApiKeyAuth: []
+        - OAuth2ClientCredentials:
+            - underwrite:read
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/JobResult'
+        '404':
+          description: Job not found
+  /v1/jobs/pull:
+    post:
+      tags: [jobs]
+      summary: Poll for queued jobs when Redis is unavailable
+      security:
+        - ApiKeyAuth: []
+        - OAuth2ClientCredentials:
+            - underwrite:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingPullRequest'
+      responses:
+        '200':
+          description: Jobs available for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollingPullResponse'
+  /v1/jobs/complete:
+    post:
+      tags: [jobs]
+      summary: Report job completion from polling worker
+      security:
+        - ApiKeyAuth: []
+        - OAuth2ClientCredentials:
+            - underwrite:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PollingCompleteRequest'
+      responses:
+        '200':
+          description: Job updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PollingCompleteResponse'
+  /v1/webhooks/test:
+    post:
+      tags: [webhooks]
+      summary: Send test webhook event
+      security:
+        - ApiKeyAuth: []
+        - OAuth2ClientCredentials:
+            - underwrite:read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookTestRequest'
+      responses:
+        '202':
+          description: Webhook queued
+  /healthz:
+    get:
+      tags: [health]
+      summary: Liveness probe
+      responses:
+        '200':
+          description: OK
+  /readyz:
+    get:
+      tags: [health]
+      summary: Readiness probe
+      responses:
+        '200':
+          description: Ready
+  /metrics:
+    get:
+      tags: [health]
+      summary: Prometheus metrics endpoint
+      responses:
+        '200':
+          description: Metrics payload
+          content:
+            text/plain:
+              schema:
+                type: string

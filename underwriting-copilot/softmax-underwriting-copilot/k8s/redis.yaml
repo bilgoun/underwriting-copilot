@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: softmax-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: softmax-redis
+  template:
+    metadata:
+      labels:
+        app: softmax-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7
+          command: ["sh", "-c", "redis-server --requirepass \"$REDIS_PASSWORD\""]
+          ports:
+            - containerPort: 6379
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: softmax-uw-secrets
+                  key: redis_password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: softmax-redis
+spec:
+  selector:
+    app: softmax-redis
+  ports:
+    - port: 6379
+      targetPort: 6379

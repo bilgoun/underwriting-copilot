@@ -1,0 +1,15 @@
+[Unit]
+Description=Softmax Underwriting Celery Worker Instance %I
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=softmax
+WorkingDirectory=/opt/softmax
+EnvironmentFile=/etc/softmax/worker-%i.env
+ExecStart=/opt/venv/bin/celery -A app.workers.celery_app.celery_app worker -l INFO -c 12 --prefetch-multiplier=1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

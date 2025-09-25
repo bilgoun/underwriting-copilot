@@ -1,0 +1,45 @@
+version: "3.9"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/softmax
+      REDIS_URL: redis://redis:6379/0
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set encryption key}
+      SANDBOX_MODE: "true"
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:8080"
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/softmax
+      REDIS_URL: redis://redis:6379/0
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set encryption key}
+      SANDBOX_MODE: "true"
+    depends_on:
+      - postgres
+      - redis
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: softmax
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+volumes:
+  postgres_data:

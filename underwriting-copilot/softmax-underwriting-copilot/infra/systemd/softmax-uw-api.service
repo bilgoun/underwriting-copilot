@@ -1,0 +1,17 @@
+[Unit]
+Description=Softmax Underwriting API (FastAPI/Uvicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=softmax
+Group=softmax
+WorkingDirectory=/opt/softmax
+Environment=TMPDIR=/mnt/softmax_tmp
+Environment=PYTHONPATH=/opt/softmax
+ExecStart=/opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 9000 --proxy-headers --forwarded-allow-ips "*"
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: softmax-uw-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: softmax-uw-api
+  template:
+    metadata:
+      labels:
+        app: softmax-uw-api
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/softmax/underwriting-api:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: PORT
+              value: "8080"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: softmax-uw-secrets
+                  key: database_url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: softmax-uw-secrets
+                  key: redis_url
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: softmax-uw-secrets
+                  key: encryption_key
+            - name: SANDBOX_MODE
+              value: "false"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: softmax-uw-api
+spec:
+  selector:
+    app: softmax-uw-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  type: ClusterIP

@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Lint
+        run: |
+          python -m compileall app
+      - name: Run tests
+        env:
+          ENCRYPTION_KEY: "$(python - <<'PY'\nfrom cryptography.fernet import Fernet\nprint(Fernet.generate_key().decode())\nPY)"
+          DATABASE_URL: sqlite+pysqlite:///:memory:
+          SANDBOX_MODE: "true"
+        run: |
+          pytest -q
+      - name: Build API image
+        run: |
+          docker build -f Dockerfile.api -t softmax/api .
+      - name: Build worker image
+        run: |
+          docker build -f Dockerfile.worker -t softmax/worker .
