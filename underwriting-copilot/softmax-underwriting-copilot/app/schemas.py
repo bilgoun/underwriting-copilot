@@ -26,8 +26,8 @@ class StatementPeriod(BaseModel):
 
 
 class Documents(BaseModel):
-    bank_statement_url: AnyHttpUrl
-    bank_statement_period: StatementPeriod
+    bank_statement_url: Optional[AnyHttpUrl] = None
+    bank_statement_period: Optional[StatementPeriod] = None
 
 
 class ConsentArtifact(BaseModel):
@@ -46,9 +46,9 @@ class CanonicalPayload(BaseModel):
     applicant: Applicant
     loan: Loan
     consent_artifact: ConsentArtifact
-    third_party_data: Dict[str, Any]
-    documents: Documents
-    collateral: Dict[str, Any]
+    third_party_data: Optional[Dict[str, Any]] = None
+    documents: Optional[Documents] = None
+    collateral: Optional[Dict[str, Any]] = None
     callback_url: AnyHttpUrl
 
 
