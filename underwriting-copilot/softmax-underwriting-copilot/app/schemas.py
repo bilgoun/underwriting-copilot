@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 from pydantic import ConfigDict
@@ -26,7 +26,7 @@ class StatementPeriod(BaseModel):
 
 
 class Documents(BaseModel):
-    bank_statement_url: Optional[AnyHttpUrl] = None
+    bank_statement_url: Union[AnyHttpUrl, None] = None
     bank_statement_period: Optional[StatementPeriod] = None
 
 
