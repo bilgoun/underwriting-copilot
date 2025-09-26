@@ -1,5 +1,5 @@
 {
-  "job_id": "TEST-003-REALESTATE",
+  "job_id": "LOAN-003-REALESTATE",
   "tenant_id": "TDB",
   "applicant": {
     "citizen_id": "УО11223344",
@@ -12,7 +12,7 @@
     "term_months": 120
   },
   "documents": {
-    "bank_statement_url": "https://httpbin.org/status/404",
+    "bank_statement_url": null,
     "bank_statement_period": {
       "from": "2024-03-01T00:00:00Z",
       "to": "2024-12-31T23:59:59Z"
@@ -25,13 +25,11 @@
     "size_sqm": 92,
     "floor": 2,
     "total_floors": 5,
-    "condition": "сайн",
+    "hurd": "сайн",
     "pledgedElsewhere": false
   },
   "third_party_data": {
     "mongolbank_credit": {
-      "score": 650,
-      "status": "fair",
       "open_accounts": 3,
       "total_debt_mnt": 12000000
     },
@@ -44,11 +42,11 @@
   },
   "consent_artifact": {
     "provider": "TDB_CONSENT_SYSTEM",
-    "reference": "CONSENT-TEST-003",
+    "reference": "CONSENT-LOAN-003",
     "scopes": ["credit_check", "collateral_evaluation"],
     "issued_at": "2025-01-26T10:00:00Z",
     "expires_at": "2025-02-26T10:00:00Z",
-    "hash": "sha256:test003"
+    "hash": "sha256:loan003hash"
   },
-  "callback_url": "https://webhook.site/test-003"
+  "callback_url": "https://webhook.site/loan-003"
 }

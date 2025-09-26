@@ -45,7 +45,7 @@ class CanonicalPayload(BaseModel):
     tenant_id: str
     applicant: Applicant
     loan: Loan
-    consent_artifact: ConsentArtifact
+    consent_artifact: Optional[ConsentArtifact] = None
     third_party_data: Optional[Dict[str, Any]] = None
     documents: Optional[Documents] = None
     collateral: Optional[Dict[str, Any]] = None

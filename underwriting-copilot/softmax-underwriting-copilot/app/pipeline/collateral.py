@@ -103,7 +103,7 @@ class CollateralClient:
                     "brand": brand,
                     "model": model,
                     "yearMade": year or 0,
-                    "condition": collateral_payload.get("condition", ""),
+                    "hurd": collateral_payload.get("hurd", ""),
                     "odometerKm": collateral_payload.get("odometerKm", 0)
                 },
                 "valuation": {
@@ -130,7 +130,7 @@ class CollateralClient:
                 "brand": collateral_payload.get("brand", ""),
                 "model": collateral_payload.get("model", ""),
                 "yearMade": collateral_payload.get("yearMade", 0),
-                "condition": collateral_payload.get("condition", ""),
+                "hurd": collateral_payload.get("hurd", ""),
                 "odometerKm": collateral_payload.get("odometerKm", 0)
             },
             "valuation": {
@@ -151,7 +151,7 @@ class CollateralClient:
                 "brand": collateral_payload.get("brand", ""),
                 "model": collateral_payload.get("model", ""),
                 "yearMade": collateral_payload.get("yearMade", 0),
-                "condition": collateral_payload.get("condition", ""),
+                "hurd": collateral_payload.get("hurd", ""),
                 "odometerKm": collateral_payload.get("odometerKm", 0)
             },
             "valuation": {
@@ -193,10 +193,10 @@ class CollateralClient:
             "year_made": collateral_payload.get("yearMade", 0),
             "imported_year": collateral_payload.get("importedYear", collateral_payload.get("yearMade", 0)),
             "odometer": collateral_payload.get("odometerKm", 0),
-            "hurd": collateral_payload.get("condition", ""),
-            "Хурдны хайрцаг": collateral_payload.get("transmission", ""),
-            "Хөдөлгүүр": collateral_payload.get("engine", ""),
-            "Өнгө": collateral_payload.get("color", "")
+            "hurd": collateral_payload.get("hurd", ""),
+            "Хурдны хайрцаг": collateral_payload.get("Хурдны хайрцаг", ""),
+            "Хөдөлгүүр": collateral_payload.get("Хөдөлгүүр", ""),
+            "Өнгө": collateral_payload.get("Өнгө", "")
         }
 
     def _transform_ml_response(self, api_response: Dict[str, Any]) -> Dict[str, Any]:

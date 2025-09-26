@@ -1,5 +1,5 @@
 {
-  "job_id": "TEST-004-NO-COLLATERAL",
+  "job_id": "LOAN-004-NO-COLLATERAL",
   "tenant_id": "TBF",
   "applicant": {
     "citizen_id": "УИ55667788",
@@ -12,7 +12,7 @@
     "term_months": 24
   },
   "documents": {
-    "bank_statement_url": "https://httpbin.org/status/404",
+    "bank_statement_url": null,
     "bank_statement_period": {
       "from": "2024-07-01T00:00:00Z",
       "to": "2024-12-31T23:59:59Z"
@@ -20,8 +20,6 @@
   },
   "third_party_data": {
     "mongolbank_credit": {
-      "score": 590,
-      "status": "fair",
       "open_accounts": 4,
       "total_debt_mnt": 18500000
     },
@@ -34,11 +32,11 @@
   },
   "consent_artifact": {
     "provider": "TBF_CONSENT_SYSTEM",
-    "reference": "CONSENT-TEST-004",
+    "reference": "CONSENT-LOAN-004",
     "scopes": ["credit_check"],
     "issued_at": "2025-01-26T10:00:00Z",
     "expires_at": "2025-02-26T10:00:00Z",
-    "hash": "sha256:test004"
+    "hash": "sha256:loan004hash"
   },
-  "callback_url": "https://webhook.site/test-004"
+  "callback_url": "https://webhook.site/loan-004"
 }

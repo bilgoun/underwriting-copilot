@@ -1,5 +1,5 @@
 {
-  "job_id": "TEST-005-VEHICLE",
+  "job_id": "LOAN-005-VEHICLE",
   "tenant_id": "TDB",
   "applicant": {
     "citizen_id": "УБ99887766",
@@ -12,7 +12,7 @@
     "term_months": 60
   },
   "documents": {
-    "bank_statement_url": "https://httpbin.org/status/404",
+    "bank_statement_url": null,
     "bank_statement_period": {
       "from": "2024-08-01T00:00:00Z",
       "to": "2024-12-31T23:59:59Z"
@@ -26,16 +26,14 @@
     "yearMade": 2021,
     "importedYear": 2021,
     "odometerKm": 35000,
-    "condition": "маш сайн",
-    "transmission": "автомат",
-    "engine": "бензин",
-    "color": "цагаан",
+    "hurd": "Маш сайн",
+    "Хурдны хайрцаг": "Автомат",
+    "Хөдөлгүүр": "2.4",
+    "Өнгө": "Цагаан",
     "pledgedElsewhere": false
   },
   "third_party_data": {
     "mongolbank_credit": {
-      "score": 610,
-      "status": "fair",
       "open_accounts": 2,
       "total_debt_mnt": 6800000
     },
@@ -48,11 +46,11 @@
   },
   "consent_artifact": {
     "provider": "TDB_CONSENT_SYSTEM",
-    "reference": "CONSENT-TEST-005",
+    "reference": "CONSENT-LOAN-005",
     "scopes": ["credit_check", "collateral_evaluation"],
     "issued_at": "2025-01-26T10:00:00Z",
     "expires_at": "2025-02-26T10:00:00Z",
-    "hash": "sha256:test005"
+    "hash": "sha256:loan005hash"
   },
-  "callback_url": "https://webhook.site/test-005"
+  "callback_url": "https://webhook.site/loan-005"
 }

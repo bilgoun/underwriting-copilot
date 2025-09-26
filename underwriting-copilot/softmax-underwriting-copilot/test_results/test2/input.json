@@ -1,5 +1,5 @@
 {
-  "job_id": "TEST-002-REALESTATE",
+  "job_id": "LOAN-002-REALESTATE",
   "tenant_id": "TBF",
   "applicant": {
     "citizen_id": "УН87654321",
@@ -12,7 +12,7 @@
     "term_months": 240
   },
   "documents": {
-    "bank_statement_url": "https://httpbin.org/status/404",
+    "bank_statement_url": null,
     "bank_statement_period": {
       "from": "2024-06-01T00:00:00Z",
       "to": "2024-12-31T23:59:59Z"
@@ -25,13 +25,11 @@
     "size_sqm": 65,
     "floor": 4,
     "total_floors": 12,
-    "condition": "шинэ",
+    "hurd": "шинэ",
     "pledgedElsewhere": false
   },
   "third_party_data": {
     "mongolbank_credit": {
-      "score": 680,
-      "status": "good",
       "open_accounts": 1,
       "total_debt_mnt": 0
     },
@@ -44,11 +42,11 @@
   },
   "consent_artifact": {
     "provider": "TBF_CONSENT_SYSTEM",
-    "reference": "CONSENT-TEST-002",
+    "reference": "CONSENT-LOAN-002",
     "scopes": ["credit_check", "collateral_evaluation", "property_valuation"],
     "issued_at": "2025-01-26T10:00:00Z",
     "expires_at": "2025-02-26T10:00:00Z",
-    "hash": "sha256:test002"
+    "hash": "sha256:loan002hash"
   },
-  "callback_url": "https://webhook.site/test-002"
+  "callback_url": "https://webhook.site/loan-002"
 }
