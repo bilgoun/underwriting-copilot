@@ -22,11 +22,20 @@ class CollateralClient:
     def valuate(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         collateral_payload = payload.get("collateral", {})
         if not collateral_payload:
-            raise RuntimeError("Collateral payload is required for valuation")
+            # Collateral is optional - return empty response
+            logger.info("no_collateral_provided")
+            return {
+                "value": 0,
+                "currency": "MNT",
+                "confidence": 0.0,
+                "source": "not_provided",
+                "risk_score": 0.5,
+                "note": "No collateral provided"
+            }
 
         collateral_type = collateral_payload.get("type", "").lower()
 
-        # For vehicles, prioritize ML model prediction
+        # For vehicles: ALWAYS try ML API first, then web search fallback
         if collateral_type == "vehicle" and not self.sandbox and self.api_key:
             try:
                 logger.info("processing_vehicle_collateral", vehicle_data=collateral_payload)
@@ -36,28 +45,78 @@ class CollateralClient:
                 return response
             except httpx.HTTPError as exc:
                 logger.warning("ml_api_error", error=str(exc))
-                # Fall back to declared value if ML API fails
-                return self._create_fallback_response(collateral_payload)
+                # Check if it's a "not found" error - if so, try web search
+                if "not found" in str(exc).lower() or "404" in str(exc):
+                    logger.info("vehicle_not_found_in_ml_api", brand=collateral_payload.get("brand"), model=collateral_payload.get("model"))
+                    return self._try_vehicle_web_search(payload, collateral_payload)
+                else:
+                    # For other API errors, fall back to declared value
+                    return self._create_fallback_response(collateral_payload)
 
-        # For non-vehicles or sandbox mode, use existing logic
+        # For real estate or non-vehicle collateral: always use web search
+        if collateral_type in ["real_estate", "property", "apartment", "house"]:
+            logger.info("processing_real_estate_collateral", collateral_data=collateral_payload)
+            market = derive_market_value(payload)
+            return self._compose_response(payload, market)
+
+        # For vehicles in sandbox mode or when ML API unavailable: use web search
+        if collateral_type == "vehicle":
+            logger.info("vehicle_web_search_fallback", sandbox=self.sandbox, has_api_key=bool(self.api_key))
+            return self._try_vehicle_web_search(payload, collateral_payload)
+
+        # For unknown collateral types: try web search or declared value
+        logger.info("unknown_collateral_type", type=collateral_type)
         market = derive_market_value(payload)
-        response = self._compose_response(payload, market)
+        return self._compose_response(payload, market)
 
-        # Try ML API as fallback for vehicles if market data unavailable
-        if (
-            collateral_type == "vehicle"
-            and response.get("source") == "declared_fallback"
-            and not self.sandbox
-            and self.api_key
-        ):
-            try:
-                api_response = self._call_remote(collateral_payload)
-                ml_response = self._create_llm_ready_response(collateral_payload, api_response)
-                return ml_response
-            except httpx.HTTPError as exc:
-                logger.warning("collateral_api_error", error=str(exc))
+    def _try_vehicle_web_search(self, payload: Dict[str, Any], collateral_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Try web search for vehicle when ML API fails or is unavailable."""
+        brand = collateral_payload.get("brand", "")
+        model = collateral_payload.get("model", "")
+        year = collateral_payload.get("yearMade", "")
 
-        return response
+        # Create search query like "BYD Leopard 5 2024 зарна үнэ"
+        search_query = f"{brand} {model}"
+        if year:
+            search_query += f" {year}"
+        search_query += " зарна үнэ Mongolia"
+
+        logger.info("vehicle_web_search", query=search_query)
+
+        # Temporarily create a modified payload for web search
+        temp_payload = payload.copy()
+        temp_payload["collateral"] = {
+            "type": "property",  # Treat as property for web search
+            "name": search_query,
+            "declared_value": collateral_payload.get("declared_value", 0)
+        }
+
+        try:
+            market = derive_market_value(temp_payload)
+            response = self._compose_response(temp_payload, market)
+
+            # Convert response back to vehicle format
+            return {
+                "type": "Vehicle",
+                "estimatedValue": int(response.get("value", 0)),
+                "pledgedElsewhere": collateral_payload.get("pledgedElsewhere", False),
+                "details": {
+                    "brand": brand,
+                    "model": model,
+                    "yearMade": year or 0,
+                    "condition": collateral_payload.get("condition", ""),
+                    "odometerKm": collateral_payload.get("odometerKm", 0)
+                },
+                "valuation": {
+                    "source": "web_search",
+                    "confidence": response.get("confidence", 0.4),
+                    "note": f"ML API unavailable, used web search for {brand} {model}",
+                    "search_query": search_query
+                }
+            }
+        except Exception as exc:
+            logger.warning("vehicle_web_search_failed", error=str(exc))
+            return self._create_fallback_response(collateral_payload)
 
     def _create_llm_ready_response(self, collateral_payload: Dict[str, Any], ml_response: Dict[str, Any]) -> Dict[str, Any]:
         """Create LLM-ready collateral response format."""

@@ -51,7 +51,7 @@ def underwrite(job_id: str) -> None:
                 parse_out: Dict[str, Any] = {}
                 bank_statement_url = payload_data.get("documents", {}).get("bank_statement_url")
 
-                if bank_statement_url:
+                if bank_statement_url and bank_statement_url != "null":
                     try:
                         tmp_path = storage.download_to_tmp(bank_statement_url)
                         pdf.validate_pdf(tmp_path)
