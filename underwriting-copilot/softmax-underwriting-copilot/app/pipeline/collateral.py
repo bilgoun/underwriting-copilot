@@ -20,49 +20,139 @@ class CollateralClient:
         self.api_key = settings.collateral_api_key
 
     def valuate(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        collateral_payload = payload.get("collateral", {})
+        if not collateral_payload:
+            raise RuntimeError("Collateral payload is required for valuation")
+
+        collateral_type = collateral_payload.get("type", "").lower()
+
+        # For vehicles, prioritize ML model prediction
+        if collateral_type == "vehicle" and not self.sandbox and self.api_key:
+            try:
+                logger.info("processing_vehicle_collateral", vehicle_data=collateral_payload)
+                api_response = self._call_remote(collateral_payload)
+                response = self._create_llm_ready_response(collateral_payload, api_response)
+                logger.info("ml_valuation_success", estimated_value=response.get("estimatedValue"))
+                return response
+            except httpx.HTTPError as exc:
+                logger.warning("ml_api_error", error=str(exc))
+                # Fall back to declared value if ML API fails
+                return self._create_fallback_response(collateral_payload)
+
+        # For non-vehicles or sandbox mode, use existing logic
         market = derive_market_value(payload)
         response = self._compose_response(payload, market)
 
-        # Fall back to remote collateral API only if market data is unavailable
+        # Try ML API as fallback for vehicles if market data unavailable
         if (
-            response.get("source") == "declared_fallback"
+            collateral_type == "vehicle"
+            and response.get("source") == "declared_fallback"
             and not self.sandbox
             and self.api_key
         ):
-            collateral_payload = payload.get("collateral", {})
-            if not collateral_payload:
-                raise RuntimeError("Collateral payload is required for valuation")
             try:
                 api_response = self._call_remote(collateral_payload)
+                ml_response = self._create_llm_ready_response(collateral_payload, api_response)
+                return ml_response
             except httpx.HTTPError as exc:
                 logger.warning("collateral_api_error", error=str(exc))
-            else:
-                response.update(
-                    {
-                        "value": api_response.get("value", response.get("value")),
-                        "confidence": api_response.get("confidence", response.get("confidence", 0.8)),
-                        "source": "remote_api",
-                        "risk_score": api_response.get("risk_score", response.get("risk_score")),
-                        "market": response.get("market"),
-                    }
-                )
 
         return response
 
+    def _create_llm_ready_response(self, collateral_payload: Dict[str, Any], ml_response: Dict[str, Any]) -> Dict[str, Any]:
+        """Create LLM-ready collateral response format."""
+        estimated_value = ml_response.get("value", 0)
+        confidence = ml_response.get("confidence", 0.8)
+
+        return {
+            "type": "Vehicle",
+            "estimatedValue": int(estimated_value),
+            "pledgedElsewhere": collateral_payload.get("pledgedElsewhere", False),
+            "details": {
+                "brand": collateral_payload.get("brand", ""),
+                "model": collateral_payload.get("model", ""),
+                "yearMade": collateral_payload.get("yearMade", 0),
+                "condition": collateral_payload.get("condition", ""),
+                "odometerKm": collateral_payload.get("odometerKm", 0)
+            },
+            "valuation": {
+                "source": "ml_model",
+                "confidence": confidence,
+                "ml_response": ml_response.get("ml_response", {})
+            }
+        }
+
+    def _create_fallback_response(self, collateral_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Create fallback response when ML API is unavailable."""
+        declared_value = collateral_payload.get("declared_value", 0)
+
+        return {
+            "type": "Vehicle",
+            "estimatedValue": int(declared_value),
+            "pledgedElsewhere": collateral_payload.get("pledgedElsewhere", False),
+            "details": {
+                "brand": collateral_payload.get("brand", ""),
+                "model": collateral_payload.get("model", ""),
+                "yearMade": collateral_payload.get("yearMade", 0),
+                "condition": collateral_payload.get("condition", ""),
+                "odometerKm": collateral_payload.get("odometerKm", 0)
+            },
+            "valuation": {
+                "source": "declared_value",
+                "confidence": 0.3,
+                "note": "ML model unavailable, using declared value"
+            }
+        }
+
     def _call_remote(self, collateral_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Transform bank vehicle data to ML API format and get prediction."""
         headers = {
             "Content-Type": "application/json",
             "X-API-KEY": self.api_key,
         }
 
+        # Transform bank payload to ML API format
+        ml_payload = self._transform_to_ml_format(collateral_payload)
+
+        logger.info("calling_ml_api", payload=ml_payload, url=f"{self.base_url}/api/predict-price/")
+
         with httpx.Client(timeout=self.timeout) as client:
             response = client.post(
                 f"{self.base_url}/api/predict-price/",
-                json=dict(collateral_payload),
+                json=ml_payload,
                 headers=headers,
             )
             response.raise_for_status()
-            return response.json()
+            api_response = response.json()
+
+            # Transform ML API response to our format
+            return self._transform_ml_response(api_response)
+
+    def _transform_to_ml_format(self, collateral_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Transform bank's vehicle data to ML model expected format."""
+        return {
+            "brand": collateral_payload.get("brand", ""),
+            "model": collateral_payload.get("model", ""),
+            "year_made": collateral_payload.get("yearMade", 0),
+            "imported_year": collateral_payload.get("importedYear", collateral_payload.get("yearMade", 0)),
+            "odometer": collateral_payload.get("odometerKm", 0),
+            "hurd": collateral_payload.get("condition", ""),
+            "Хурдны хайрцаг": collateral_payload.get("transmission", ""),
+            "Хөдөлгүүр": collateral_payload.get("engine", ""),
+            "Өнгө": collateral_payload.get("color", "")
+        }
+
+    def _transform_ml_response(self, api_response: Dict[str, Any]) -> Dict[str, Any]:
+        """Transform ML API response to our internal format."""
+        predicted_price = api_response.get("predicted_price", 0)
+        confidence = api_response.get("confidence", 0.8)
+
+        return {
+            "value": float(predicted_price),
+            "confidence": float(confidence),
+            "source": "ml_model",
+            "ml_response": api_response
+        }
 
     def _compose_response(self, payload: Dict[str, Any], market: Dict[str, Any]) -> Dict[str, Any]:
         collateral_payload = payload.get("collateral", {})
@@ -95,8 +185,15 @@ class CollateralClient:
 
 
 def valuate_collateral(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Main entry point for collateral valuation."""
     client = CollateralClient()
     return client.valuate(payload)
+
+
+def derive_market_value(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Derive market value for vehicles using ML model API."""
+    # For backward compatibility, redirect to the main valuation function
+    return valuate_collateral(payload)
 
 
 def _risk_from_values(*, declared_value: float, estimated_value: float, samples: int) -> float:
