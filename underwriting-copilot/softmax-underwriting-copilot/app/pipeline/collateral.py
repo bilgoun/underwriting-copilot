@@ -87,8 +87,7 @@ class CollateralClient:
         temp_payload = payload.copy()
         temp_payload["collateral"] = {
             "type": "property",  # Treat as property for web search
-            "name": search_query,
-            "declared_value": collateral_payload.get("declared_value", 0)
+            "name": search_query
         }
 
         try:
@@ -143,11 +142,10 @@ class CollateralClient:
 
     def _create_fallback_response(self, collateral_payload: Dict[str, Any]) -> Dict[str, Any]:
         """Create fallback response when ML API is unavailable."""
-        declared_value = collateral_payload.get("declared_value", 0)
-
+        # Banks don't provide declared values anymore
         return {
             "type": "Vehicle",
-            "estimatedValue": int(declared_value),
+            "estimatedValue": 0,
             "pledgedElsewhere": collateral_payload.get("pledgedElsewhere", False),
             "details": {
                 "brand": collateral_payload.get("brand", ""),
@@ -157,9 +155,9 @@ class CollateralClient:
                 "odometerKm": collateral_payload.get("odometerKm", 0)
             },
             "valuation": {
-                "source": "declared_value",
-                "confidence": 0.3,
-                "note": "ML model unavailable, using declared value"
+                "source": "unavailable",
+                "confidence": 0.1,
+                "note": "ML API and web search both unavailable, no valuation possible"
             }
         }
 
@@ -214,9 +212,6 @@ class CollateralClient:
         }
 
     def _compose_response(self, payload: Dict[str, Any], market: Dict[str, Any]) -> Dict[str, Any]:
-        collateral_payload = payload.get("collateral", {})
-        declared = float(collateral_payload.get("declared_value") or 0)
-
         estimated_value = market.get("estimated_value_mnt")
         samples = market.get("samples", 0)
         confidence = float(market.get("confidence") or 0.0)
@@ -226,12 +221,11 @@ class CollateralClient:
             source = "web_search"
             confidence = max(confidence, 0.55 if samples else 0.5)
         else:
-            value = declared
-            source = "declared_fallback"
-            if value:
-                confidence = max(confidence, 0.35)
+            value = 0
+            source = "unavailable"
+            confidence = 0.1
 
-        risk_score = _risk_from_values(declared_value=declared, estimated_value=value, samples=samples)
+        risk_score = _risk_from_values(declared_value=0, estimated_value=value, samples=samples)
 
         return {
             "value": value,

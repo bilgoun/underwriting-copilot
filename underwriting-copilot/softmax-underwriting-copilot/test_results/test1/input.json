@@ -1,0 +1,58 @@
+{
+  "job_id": "TEST-001-VEHICLE",
+  "tenant_id": "TDB",
+  "applicant": {
+    "citizen_id": "УА12345678",
+    "full_name": "Батбаяр Цагаан",
+    "phone": "+976-99887766"
+  },
+  "loan": {
+    "type": "collateral_loan",
+    "amount": 45000000,
+    "term_months": 36
+  },
+  "documents": {
+    "bank_statement_url": "https://httpbin.org/status/404",
+    "bank_statement_period": {
+      "from": "2024-01-01T00:00:00Z",
+      "to": "2024-12-31T23:59:59Z"
+    }
+  },
+  "collateral": {
+    "type": "vehicle",
+    "plateNo": "УБ-5678",
+    "brand": "Toyota",
+    "model": "Land Cruiser",
+    "yearMade": 2019,
+    "importedYear": 2019,
+    "odometerKm": 85000,
+    "condition": "сайн",
+    "transmission": "автомат",
+    "engine": "бензин",
+    "color": "хар",
+    "pledgedElsewhere": false
+  },
+  "third_party_data": {
+    "mongolbank_credit": {
+      "score": 720,
+      "status": "excellent",
+      "open_accounts": 2,
+      "total_debt_mnt": 8500000
+    },
+    "social_security": {
+      "employment_status": "active",
+      "current_employer": "МОНГОЛ БАНК",
+      "monthly_salary": 4800000,
+      "employment_duration_months": 48
+    }
+  },
+  "consent_artifact": {
+    "provider": "TDB_CONSENT_SYSTEM",
+    "reference": "CONSENT-TEST-001",
+    "scopes": ["credit_check", "collateral_evaluation"],
+    "issued_at": "2025-01-26T10:00:00Z",
+    "expires_at": "2025-02-26T10:00:00Z",
+    "hash": "sha256:test001"
+  },
+  "callback_url": "https://webhook.site/test-001"
+}

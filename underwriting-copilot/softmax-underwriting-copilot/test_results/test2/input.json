@@ -1,0 +1,54 @@
+{
+  "job_id": "TEST-002-REALESTATE",
+  "tenant_id": "TBF",
+  "applicant": {
+    "citizen_id": "УН87654321",
+    "full_name": "Сайханбаяр Ганбаатар",
+    "phone": "+976-88776655"
+  },
+  "loan": {
+    "type": "mortgage_loan",
+    "amount": 120000000,
+    "term_months": 240
+  },
+  "documents": {
+    "bank_statement_url": "https://httpbin.org/status/404",
+    "bank_statement_period": {
+      "from": "2024-06-01T00:00:00Z",
+      "to": "2024-12-31T23:59:59Z"
+    }
+  },
+  "collateral": {
+    "type": "real_estate",
+    "name": "Хүннү 2222 2 өрөө байр",
+    "address": "Хүннү 2222, 2 өрөө байр",
+    "size_sqm": 65,
+    "floor": 4,
+    "total_floors": 12,
+    "condition": "шинэ",
+    "pledgedElsewhere": false
+  },
+  "third_party_data": {
+    "mongolbank_credit": {
+      "score": 680,
+      "status": "good",
+      "open_accounts": 1,
+      "total_debt_mnt": 0
+    },
+    "social_security": {
+      "employment_status": "active",
+      "current_employer": "OЮУН САНАА ХХК",
+      "monthly_salary": 3200000,
+      "employment_duration_months": 36
+    }
+  },
+  "consent_artifact": {
+    "provider": "TBF_CONSENT_SYSTEM",
+    "reference": "CONSENT-TEST-002",
+    "scopes": ["credit_check", "collateral_evaluation", "property_valuation"],
+    "issued_at": "2025-01-26T10:00:00Z",
+    "expires_at": "2025-02-26T10:00:00Z",
+    "hash": "sha256:test002"
+  },
+  "callback_url": "https://webhook.site/test-002"
+}

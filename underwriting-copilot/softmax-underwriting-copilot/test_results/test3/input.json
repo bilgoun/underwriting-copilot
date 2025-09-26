@@ -1,0 +1,54 @@
+{
+  "job_id": "TEST-003-REALESTATE",
+  "tenant_id": "TDB",
+  "applicant": {
+    "citizen_id": "УО11223344",
+    "full_name": "Мандах Дорж",
+    "phone": "+976-77665544"
+  },
+  "loan": {
+    "type": "home_equity_loan",
+    "amount": 80000000,
+    "term_months": 120
+  },
+  "documents": {
+    "bank_statement_url": "https://httpbin.org/status/404",
+    "bank_statement_period": {
+      "from": "2024-03-01T00:00:00Z",
+      "to": "2024-12-31T23:59:59Z"
+    }
+  },
+  "collateral": {
+    "type": "real_estate",
+    "name": "River Garden 4 uruu bair",
+    "address": "River Garden, 4 үе байр",
+    "size_sqm": 92,
+    "floor": 2,
+    "total_floors": 5,
+    "condition": "сайн",
+    "pledgedElsewhere": false
+  },
+  "third_party_data": {
+    "mongolbank_credit": {
+      "score": 650,
+      "status": "fair",
+      "open_accounts": 3,
+      "total_debt_mnt": 12000000
+    },
+    "social_security": {
+      "employment_status": "active",
+      "current_employer": "МОНГОЛ УЛСЫН ИХ СУРГУУЛЬ",
+      "monthly_salary": 2800000,
+      "employment_duration_months": 84
+    }
+  },
+  "consent_artifact": {
+    "provider": "TDB_CONSENT_SYSTEM",
+    "reference": "CONSENT-TEST-003",
+    "scopes": ["credit_check", "collateral_evaluation"],
+    "issued_at": "2025-01-26T10:00:00Z",
+    "expires_at": "2025-02-26T10:00:00Z",
+    "hash": "sha256:test003"
+  },
+  "callback_url": "https://webhook.site/test-003"
+}
