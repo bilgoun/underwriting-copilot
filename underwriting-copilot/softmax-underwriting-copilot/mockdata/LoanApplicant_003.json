@@ -1,0 +1,120 @@
+{
+  "bureau": "CreditBureau",
+  "pull": {
+    "requestId": "ZMS-25-0926-003333",
+    "pulledAt": "2025-09-26T14:17:20+08:00",
+    "purpose": "New credit underwriting",
+    "subscriberCode": "SOFTMAXAI-BANKPARTNER-001"
+  },
+  "summary": {
+    "openAccounts": 5,
+    "closedAccounts": 2,
+    "totalOpenBalanceMNT": 18950000,
+    "totalMonthlyPaymentMNT": 1285000,
+    "maxDPDLast24M": 75,
+    "numDPD1to29Last12M": 8,
+    "numInquiriesLast6M": 7
+  },
+  "accounts": [
+    {
+      "accountId": "GOLOMT-CC-180503",
+      "type": "CREDIT_CARD",
+      "creditor": "Golomt Bank",
+      "openedDate": "2018-05-03",
+      "status": "ACTIVE",
+      "creditLimitMNT": 3000000,
+      "currentBalanceMNT": 2950000,
+      "minPaymentMNT": 295000,
+      "utilizationPct": 98.3,
+      "dpd": { "current": 12, "maxLast24M": 45, "lastDelinquency": "2025-08-14" }
+    },
+    {
+      "accountId": "KHAN-LOAN-200902",
+      "type": "CONSUMER_LOAN",
+      "creditor": "Khan Bank",
+      "openedDate": "2020-09-02",
+      "status": "ACTIVE",
+      "originalAmountMNT": 20000000,
+      "currentBalanceMNT": 12500000,
+      "installmentMNT": 650000,
+      "termMonths": 48,
+      "remainingMonths": 20,
+      "dpd": { "current": 8, "maxLast24M": 75, "lastDelinquency": "2024-11-30" }
+    },
+    {
+      "accountId": "TDB-CC-220815",
+      "type": "CREDIT_CARD",
+      "creditor": "Trade and Development Bank",
+      "openedDate": "2022-08-15",
+      "status": "ACTIVE",
+      "creditLimitMNT": 2500000,
+      "currentBalanceMNT": 2500000,
+      "minPaymentMNT": 250000,
+      "utilizationPct": 100.0,
+      "dpd": { "current": 5, "maxLast24M": 38, "lastDelinquency": "2025-05-22" }
+    },
+    {
+      "accountId": "NOMIN-BNPL-240420",
+      "type": "INSTALLMENT",
+      "creditor": "Nomin BNPL",
+      "openedDate": "2024-04-20",
+      "status": "ACTIVE",
+      "originalAmountMNT": 3500000,
+      "currentBalanceMNT": 1000000,
+      "installmentMNT": 145000,
+      "termMonths": 24,
+      "remainingMonths": 7,
+      "dpd": { "current": 0, "maxLast24M": 18, "lastDelinquency": "2024-12-15" }
+    },
+    {
+      "accountId": "SKYTEL-PLAN-250101",
+      "type": "TELECOM_INSTALLMENT",
+      "creditor": "SkyTel",
+      "openedDate": "2025-01-01",
+      "status": "ACTIVE",
+      "originalAmountMNT": 800000,
+      "currentBalanceMNT": 0,
+      "installmentMNT": 0,
+      "termMonths": 12,
+      "remainingMonths": 3,
+      "dpd": { "current": 2, "maxLast24M": 12, "lastDelinquency": "2025-07-05" }
+    },
+    {
+      "accountId": "STATE-LOAN-170820",
+      "type": "CONSUMER_LOAN",
+      "creditor": "State Bank",
+      "openedDate": "2017-08-20",
+      "closedDate": "2023-03-15",
+      "status": "CLOSED",
+      "originalAmountMNT": 8000000,
+      "settledOk": false,
+      "dpd": { "historicalMax": 90 }
+    },
+    {
+      "accountId": "XACBANK-CC-190610",
+      "type": "CREDIT_CARD",
+      "creditor": "XacBank",
+      "openedDate": "2019-06-10",
+      "closedDate": "2024-02-28",
+      "status": "CLOSED",
+      "originalAmountMNT": 1800000,
+      "settledOk": false,
+      "dpd": { "historicalMax": 120 }
+    }
+  ],
+      "collateralOffered": [
+      {
+        "type": "Real Estate",
+        "propertyType": "Apartment",
+        "address": "Энканто Хотхон 3 өрөө",
+        "pledgedElsewhere": false
+      }
+    ],
+  "requestedLoan": {
+    "amountMNT": 250000000,
+    "termMonths": 120,
+    "aprPct": 15.5,
+    "estimatedMonthlyInstallmentMNT": 3018650,
+    "purpose": "Business investment"
+  }
+}

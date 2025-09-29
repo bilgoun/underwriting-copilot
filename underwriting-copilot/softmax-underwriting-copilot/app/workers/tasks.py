@@ -47,7 +47,7 @@ def underwrite(job_id: str) -> None:
         tmp_path: Path | None = None
         try:
             with metrics.latency_timer(underwrite_duration_seconds, tenant_id=tenant_id, stage="total"):
-                # Try to process bank statement, but continue without it if unavailable
+                # Try to process bank statement if provided, but continue without it if unavailable
                 parse_out: Dict[str, Any] = {}
                 bank_statement_url = payload_data.get("documents", {}).get("bank_statement_url")
 
@@ -60,24 +60,10 @@ def underwrite(job_id: str) -> None:
                         logger.info("bank_statement_processed", job_id=job.id)
                     except Exception as exc:
                         logger.warning("bank_statement_unavailable", job_id=job.id, error=str(exc))
-                        parse_out = {
-                            "customer_name": payload_data.get("applicant", {}).get("full_name", ""),
-                            "account_number": "UNAVAILABLE",
-                            "bank_code": "UNKNOWN",
-                            "average_monthly_income": 0,
-                            "rows": [],
-                            "stats": {"error": "Bank statement not available"}
-                        }
+                        parse_out = {}  # Empty - don't include in LLM input
                 else:
                     logger.info("no_bank_statement_provided", job_id=job.id)
-                    parse_out = {
-                        "customer_name": payload_data.get("applicant", {}).get("full_name", ""),
-                        "account_number": "NOT_PROVIDED",
-                        "bank_code": "UNKNOWN",
-                        "average_monthly_income": 0,
-                        "rows": [],
-                        "stats": {"note": "No bank statement provided"}
-                    }
+                    parse_out = {}  # Empty - don't include in LLM input
 
                 with metrics.latency_timer(metrics.collateral_seconds, tenant_id=tenant_id):
                     collateral_out = collateral.valuate_collateral(payload_data)

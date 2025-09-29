@@ -1,63 +1,66 @@
 from __future__ import annotations
 
 import json
+import os
 from typing import Any, Dict, Tuple
+
+import requests
 
 from ..config import get_settings
 
 SYSTEM_PROMPT = (
-    "Та банкны ахлах зээлийн шинжээч. Доорх JSON өгөгдлөөр шийдвэр гаргалтад туустлах "
-    "богино, тодорхой, хариуцлагатай кредит мемо (Markdown) бич. Барьцаа хөрөнгийн "
-    "веб хайлтын үр дүнг ашиглан эхлээд квадрат метрийн дундаж үнийг тооцоолж, түүнийгээ "
-    "тодорхой тайлагна. Дараа нь тухайн үл хөдлөхийн нийт үнийг гарган дүгнэлтдээ тусга." 
+    "Та банкны ахлах зээлийн шинжээч. Доорх JSON өгөгдлөөр шийдвэр гаргалтад туслах "
+    "богино, тодорхой, хариуцлагатай кредит мемо (Markdown) бич. "
+    "\n\nОрлогын мэдээлэл: Банкны хуулга байвал түүнээс, үгүй бол бусад эх сурвалжаас авч дүгнэлт гарга."
+    "\n\nБарьцаа хөрөнгө: Машины хувьд ML API-н үнэлгээ + веб хайлтын түүхий үр дүнг ашигла. "
+    "Үл хөдлөх хөрөнгийн хувьд веб хайлтын түүхий өгөгдлөөс үнэ дүгнээд үндэслэх."
+    "\n\nВеб хайлтын түүхий үр дүнг задлан шинжилж, боломжит зах зээлийн үнийг тайлбарла."
+    "\n\nСанамж: Манай сарын хүүгийн хүрээ 3%-4%. DTI, нийт өрийн үйлчилгээ/орлогын (DSR) харьцаа, LTV зэрэг үндсэн үзүүлэлтүүдийг тооцоолж, эрсдэлд тулгуурлан Accept / Review / Decline шийдвэр болон санал болгосон сарын хүүг мемо дотроо тодорхой бич."
 )
 
 
-def _sandbox_memo(features: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
-    applicant_section = features.get("монгол_банкны_өгөгдөл", {})
-    risk_score = features.get("Risk_Score", 0.43)
-    collateral_section = features.get("барьцаа_хөрөнгийн_үнэлгээний_өгөгдөл", {})
-    market_section = collateral_section.get("зах_зээлийн_үнэд_суурилсан_үнэлгээ", {})
-    market_stats = market_section.get("статистик", {})
-    median_price = market_stats.get("median_price_mnt")
-    sample_count = market_section.get("зарын_тоо") or len(market_section.get("эх_сурвалжууд", []))
+def call_gemini_llm(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
+    """Send a prompt to the Gemini API and return the response."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "Gemini API key not found. Please set the GEMINI_API_KEY environment variable."
+        )
 
-    decision = "REVIEW" if risk_score > 0.4 else "APPROVE"
-    interest = 18.4
-    memo_lines = [
-        "## Кредит Мемо (Sandbox)",
-        "",
-        "### Applicant",
-        f"- Зээлийн хүсэлт: {features.get('хүссэн_зээлийн_хэмжээ', 'N/A')}",
-        "",
-        "### Income & Stability",
-        f"- Дундаж сарын орлого: {features.get('дансны_хуулга_өгөгдөл', {}).get('дундаж_сарын_орлого', 'N/A')}₮",
-        "",
-        "### Risk Score",
-        f"- Risk Score: {risk_score}",
-        "",
-        "### Collateral Insights",
-        f"- Зах зээлийн жишиг үнэ: {median_price or collateral_section.get('үнэлгээ', 'N/A')}₮",
-        f"- Зах зээлийн эх сурвалж: {collateral_section.get('эх_сурвалж', 'N/A')}",
-        f"- Туршсан зарын тоо: {sample_count}",
-        "",
-        "### Recommendation",
-        f"- {decision}",
-    ]
-
-    meta = {
-        "decision": decision,
-        "interest_rate_suggestion": interest,
+    model_name = "gemini-2.5-pro-preview-05-06"
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+    )
+    headers = {"Content-Type": "application/json"}
+    data = {
+        "contents": [{"parts": [{"text": user_prompt}]}],
+        "systemInstruction": {"parts": [{"text": system_prompt}]},
     }
-    memo_lines.append("")
-    memo_lines.append(f"<!--META {json.dumps(meta, ensure_ascii=False)} -->")
-    return "\n".join(memo_lines), meta
+
+    response = requests.post(url, headers=headers, json=data, timeout=90)
+    if response.status_code == 200:
+        return response.json()
+    raise RuntimeError(
+        f"Gemini API request failed with status code {response.status_code}: {response.text}"
+    )
 
 
-def generate_memo(features: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
-    settings = get_settings()
-    if settings.sandbox_mode or settings.llm_provider.lower() == "sandbox":
-        return _sandbox_memo(features)
+def _extract_memo_text(gemini_response: Dict[str, Any]) -> str:
+    candidates = gemini_response.get("candidates") or []
+    for candidate in candidates:
+        content = candidate.get("content") or {}
+        parts = content.get("parts") or []
+        for part in parts:
+            text = part.get("text")
+            if text:
+                return text
+    raise RuntimeError("Gemini response did not contain any text content")
 
-    # Placeholder for real LLM integration.
-    raise NotImplementedError("LLM provider integration not yet implemented")
+
+def generate_memo(features: Dict[str, Dict]) -> Tuple[str, Dict[str, Any]]:
+    _ = get_settings()  # ensure settings loaded / future config use
+    user_prompt = json.dumps(features, ensure_ascii=False)
+    gemini_response = call_gemini_llm(SYSTEM_PROMPT, user_prompt)
+    memo = _extract_memo_text(gemini_response)
+    meta = {"raw_response": gemini_response}
+    return memo, meta

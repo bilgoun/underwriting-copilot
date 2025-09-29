@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Any, Dict
 
 import httpx
@@ -14,14 +15,17 @@ logger = structlog.get_logger("pipeline.collateral")
 class CollateralClient:
     def __init__(self, base_url: str | None = None, timeout: int | None = None) -> None:
         settings = get_settings()
-        self.base_url = str(base_url or settings.collateral_api_url).rstrip('/')
+        fallback_url = os.getenv("SOFTMAX_COLLATERAL_URL") or "https://softmax.mn"
+        resolved_url = base_url or settings.collateral_api_url or fallback_url
+        self.base_url = str(resolved_url).rstrip('/')
         self.timeout = timeout or settings.collateral_api_timeout
         self.sandbox = settings.sandbox_mode
-        self.api_key = settings.collateral_api_key
+        self.api_key = settings.collateral_api_key or os.getenv("COLLATERAL_API_KEY") or os.getenv("X_API_KEY")
 
     def valuate(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        collateral_payload = payload.get("collateral", {})
-        if not collateral_payload:
+        # New structure: collateral is in collateralOffered array
+        collateral_offered = payload.get("collateralOffered", [])
+        if not collateral_offered:
             # Collateral is optional - return empty response
             logger.info("no_collateral_provided")
             return {
@@ -33,10 +37,13 @@ class CollateralClient:
                 "note": "No collateral provided"
             }
 
+        # Take the first collateral item
+        collateral_payload = collateral_offered[0] if collateral_offered else {}
+
         collateral_type = collateral_payload.get("type", "").lower()
 
         # For vehicles: ALWAYS try ML API first, then web search fallback
-        if collateral_type == "vehicle" and not self.sandbox and self.api_key:
+        if collateral_type == "vehicle" and self.api_key:
             try:
                 logger.info("processing_vehicle_collateral", vehicle_data=collateral_payload)
                 api_response = self._call_remote(collateral_payload)
@@ -73,7 +80,7 @@ class CollateralClient:
         """Try web search for vehicle when ML API fails or is unavailable."""
         brand = collateral_payload.get("brand", "")
         model = collateral_payload.get("model", "")
-        year = collateral_payload.get("yearMade", "")
+        year = collateral_payload.get("year_made", "")
 
         # Create search query like "BYD Leopard 5 2024 зарна үнэ"
         search_query = f"{brand} {model}"
@@ -102,9 +109,9 @@ class CollateralClient:
                 "details": {
                     "brand": brand,
                     "model": model,
-                    "yearMade": year or 0,
+                    "year_made": year or 0,
                     "hurd": collateral_payload.get("hurd", ""),
-                    "odometerKm": collateral_payload.get("odometerKm", 0)
+                    "odometer": collateral_payload.get("odometer", 0)
                 },
                 "valuation": {
                     "source": "web_search",
@@ -129,14 +136,15 @@ class CollateralClient:
             "details": {
                 "brand": collateral_payload.get("brand", ""),
                 "model": collateral_payload.get("model", ""),
-                "yearMade": collateral_payload.get("yearMade", 0),
+                "year_made": collateral_payload.get("year_made", 0),
                 "hurd": collateral_payload.get("hurd", ""),
-                "odometerKm": collateral_payload.get("odometerKm", 0)
+                "odometer": collateral_payload.get("odometer", 0)
             },
             "valuation": {
                 "source": "ml_model",
                 "confidence": confidence,
-                "ml_response": ml_response.get("ml_response", {})
+                "ml_response": ml_response.get("ml_response", {}),
+                "raw_response": ml_response.get("raw_response"),
             }
         }
 
@@ -150,9 +158,9 @@ class CollateralClient:
             "details": {
                 "brand": collateral_payload.get("brand", ""),
                 "model": collateral_payload.get("model", ""),
-                "yearMade": collateral_payload.get("yearMade", 0),
+                "year_made": collateral_payload.get("year_made", 0),
                 "hurd": collateral_payload.get("hurd", ""),
-                "odometerKm": collateral_payload.get("odometerKm", 0)
+                "odometer": collateral_payload.get("odometer", 0)
             },
             "valuation": {
                 "source": "unavailable",
@@ -180,26 +188,30 @@ class CollateralClient:
                 headers=headers,
             )
             response.raise_for_status()
-            api_response = response.json()
+            raw_body = response.text
+            try:
+                api_response = response.json()
+            except ValueError:  # pragma: no cover - defensive
+                api_response = {}
 
             # Transform ML API response to our format
-            return self._transform_ml_response(api_response)
+            return self._transform_ml_response(api_response, raw_body)
 
     def _transform_to_ml_format(self, collateral_payload: Dict[str, Any]) -> Dict[str, Any]:
         """Transform bank's vehicle data to ML model expected format."""
         return {
             "brand": collateral_payload.get("brand", ""),
             "model": collateral_payload.get("model", ""),
-            "year_made": collateral_payload.get("yearMade", 0),
-            "imported_year": collateral_payload.get("importedYear", collateral_payload.get("yearMade", 0)),
-            "odometer": collateral_payload.get("odometerKm", 0),
+            "year_made": collateral_payload.get("year_made", 0),
+            "imported_year": collateral_payload.get("imported_year", collateral_payload.get("year_made", 0)),
+            "odometer": collateral_payload.get("odometer", 0),
             "hurd": collateral_payload.get("hurd", ""),
             "Хурдны хайрцаг": collateral_payload.get("Хурдны хайрцаг", ""),
             "Хөдөлгүүр": collateral_payload.get("Хөдөлгүүр", ""),
             "Өнгө": collateral_payload.get("Өнгө", "")
         }
 
-    def _transform_ml_response(self, api_response: Dict[str, Any]) -> Dict[str, Any]:
+    def _transform_ml_response(self, api_response: Dict[str, Any], raw_body: str) -> Dict[str, Any]:
         """Transform ML API response to our internal format."""
         predicted_price = api_response.get("predicted_price", 0)
         confidence = api_response.get("confidence", 0.8)
@@ -208,7 +220,8 @@ class CollateralClient:
             "value": float(predicted_price),
             "confidence": float(confidence),
             "source": "ml_model",
-            "ml_response": api_response
+            "ml_response": api_response,
+            "raw_response": raw_body,
         }
 
     def _compose_response(self, payload: Dict[str, Any], market: Dict[str, Any]) -> Dict[str, Any]:

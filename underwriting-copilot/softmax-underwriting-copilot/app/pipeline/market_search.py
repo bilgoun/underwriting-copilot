@@ -529,29 +529,50 @@ def gather_market_listings(
 
 
 def derive_market_value(payload: Dict[str, object]) -> Dict[str, object]:
+    """Simplified real estate search - just building name + 'зарна'."""
+    # Support both old format (collateral) and new format (collateralOffered)
     collateral = payload.get("collateral", {}) if isinstance(payload, dict) else {}
-    apartment_name = str(collateral.get("name") or collateral.get("building") or "")
-    size = collateral.get("size_m2") or collateral.get("size")
 
-    if not apartment_name or not size:
+    # If no collateral in old format, check new format
+    if not collateral:
+        collateral_offered = payload.get("collateralOffered", [])
+        if collateral_offered:
+            collateral = collateral_offered[0]
+
+    # Extract building/apartment name from various fields
+    apartment_name = str(
+        collateral.get("name") or
+        collateral.get("building") or
+        collateral.get("address") or
+        ""
+    )
+
+    if not apartment_name:
         return {
             "listings": [],
             "statistics": {},
             "estimated_value_mnt": None,
             "confidence": 0.0,
             "samples": 0,
+            "search_query": "",
+            "raw_results": []
         }
 
-    try:
-        size_m2 = float(size)
-    except (TypeError, ValueError):
-        logger.warning("invalid_size", size=size)
-        return {
-            "listings": [],
-            "statistics": {},
-            "estimated_value_mnt": None,
-            "confidence": 0.0,
-            "samples": 0,
-        }
+    # NEW SIMPLIFIED APPROACH: Extract building name and search with "зарна"
+    # Example: "Энканто Хотхон 3 өрөө" -> "Энканто Хотхон зарна"
+    import re
+    # Remove room count and size info - just keep building name
+    building_name = re.split(r'\s+\d+\s*(өрөө|урөө|oroo|room)', apartment_name, flags=re.IGNORECASE)[0]
+    building_name = re.split(r'\s+\d+\s*(м2|m2|sq)', building_name, flags=re.IGNORECASE)[0]
+    building_name = building_name.strip()
 
-    return gather_market_listings(apartment_name, size_m2)
+    # Simple search query: building name + "зарна"
+    search_query = f"{building_name} зарна"
+
+    logger.info("simplified_real_estate_search",
+               original=apartment_name,
+               building=building_name,
+               query=search_query)
+
+    # Use size_m2=50 as default for search (will be ignored in new approach)
+    return gather_market_listings(building_name, 50.0)

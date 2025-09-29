@@ -1,177 +1,529 @@
-# External Data Submission Guide
+# Bank Data Submission Guide
+## Softmax Underwriting Copilot Integration
 
-This guide describes the payload format partner banks must use when sending loan underwriting jobs to Softmax Underwriting Copilot. Follow these conventions so that every dataset can be ingested without manual workarounds while avoiding unnecessary exposure of personally identifiable information (PII).
+### Overview
 
-## 1. Packaging and Transport
-- Bundle every job in a single ZIP archive named `job_<job_id>.zip` (example: `job_2025-09-27-0017.zip`).
-- The ZIP must contain a single top level directory: `job_<job_id>/`.
-- Encode all text files as UTF-8 without BOM.
-- Encrypt the archive with PGP or AES-256 when sending over email or shared storage. When using SFTP, encryption is optional but recommended.
-- Submit the archive via `POST https://uw-api.softmax.mn/jobs` using `multipart/form-data` with fields `metadata` (JSON manifest) and `payload` (ZIP file). If the API is unavailable, fall back to the secure SFTP drop point agreed during onboarding.
+This guide provides comprehensive instructions for Mongolian banks to integrate with the Softmax Underwriting Copilot API. The system provides automated loan underwriting analysis, credit memo generation, and risk assessment for consumer and collateral-backed loans.
 
-Recommended folder layout:
+---
+
+## Quick Start
+
+### 1. Authentication Setup
+
+Your bank has been assigned unique credentials:
+
+**For TDB (Trade and Development Bank):**
+- API Key: `L8v82V-xS2lfZdSdztDgXdXBWqksp0liUTM3wDu237k`
+- Tenant Secret: `BdB7adCijqySvhglFFYcaLAkpwsONRoRmdBJresEL3A`
+
+**For TBF (TenGer Financial Group):**
+- API Key: `BO43M365zFp7lc8LIcJAyN1KBBk07Q8vedQbi5WDPDg`
+- Tenant Secret: `9mNlCWO2DUdJPXAMjKBXSuGk0NPHdIkDvCl_LhCMinQ`
+
+### 2. API Endpoint
+
+**Production Endpoint:** `https://uw-api.softmax.mn/v1/underwrite`
+
+### 3. Integration Pattern
+
 ```
-job_<job_id>/
-  manifest.json
-  borrower.json
-  loan_request.json
-  collateral.json
-  bank_statements/
-    <bank_code>_<account_reference>_<currency>.pdf
-    metadata.json                # optional per-account metadata
-  social_insurance/
-    raw.json
-  credit_bureau/
-    raw.json
-  attachments/                   # optional supporting docs
+Bank System → Submit Loan Application → Softmax API → Background Processing → Webhook Callback
 ```
 
-## 2. Required Control File: `manifest.json`
-`manifest.json` keeps transport level metadata so we can reconcile submissions and trace ownership without storing raw PII.
+---
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `job_id` | string | yes | Unique identifier provided by the bank. Must match the archive name. |
-| `submitted_at` | string (ISO 8601) | yes | Timestamp when the job bundle was generated. Example `2025-09-27T11:45:00+08:00`. |
-| `institution_code` | string | yes | Short code registered with us (for example `PARTNER_BANK`). |
-| `contact` | object | yes | Point of contact for clarifications. |
-| `contact.name` | string | yes | Responsible analyst (use job title or alias; avoid personal names if policy requires). |
-| `contact.email` | string | yes | Shared team inbox for follow ups. |
-| `contact.phone` | string | no | Optional shared hotline. |
-| `encryption` | object | no | How the payload was encrypted (PGP key id, algorithm). |
-| `files_checksum` | array | no | Optional list of `{ "path": "relative/path", "sha256": "..." }`. |
+## Data Submission Process
 
-### Sample `manifest.json`
+### Step 1: Prepare Bank Statement PDF
+
+**Requirements:**
+- Upload bank statement PDF to your secure file storage
+- Generate a time-limited signed URL (recommended: 1-hour expiration)
+- Ensure PDF is accessible via HTTPS
+
+**Supported Banks:**
+- Golomt Bank
+- Khan Bank
+- State Bank of Mongolia
+- TDB Bank
+- Xac Bank
+
+### Step 2: Submit Loan Application
+
+**HTTP Request:**
+```http
+POST https://uw-api.softmax.mn/v1/underwrite
+Content-Type: application/json
+X-Api-Key: YOUR_API_KEY
+X-Signature: HMAC_SIGNATURE
+```
+
+### Step 3: Monitor Job Status
+
+**Check Status:**
+```http
+GET https://uw-api.softmax.mn/v1/jobs/{job_id}
+X-Api-Key: YOUR_API_KEY
+```
+
+---
+
+## Request Format
+
+### Complete JSON Payload Example
+
 ```json
 {
-  "job_id": "2025-09-27-0017",
-  "submitted_at": "2025-09-27T11:45:00+08:00",
-  "institution_code": "PARTNER_BANK",
-  "contact": {
-    "name": "Underwriting Integrations Team",
-    "email": "uw-integrations@partnerbank.mn"
+  "job_id": "TDB-2025-0001",
+  "tenant_id": "TDB",
+  "applicant": {
+    "citizen_id": "УН98042314",
+    "full_name": "Батбаяр Доржийн",
+    "phone": "+976-99123456"
   },
-  "encryption": {
-    "method": "pgp",
-    "fingerprint": "8F2A 90B1 45AC 0D2E 1A77  9F2E 3A91 0C58 8F4D 1F21"
-  }
+  "loan": {
+    "type": "consumer_loan",
+    "amount": 50000000,
+    "term_months": 36
+  },
+  "documents": {
+    "bank_statement_url": "https://your-secure-storage.com/statements/signed-url?expires=1234567890",
+    "bank_statement_period": {
+      "from": "2024-01-01T00:00:00Z",
+      "to": "2024-12-31T23:59:59Z"
+    }
+  },
+  "consent_artifact": {
+    "provider": "TDB_CONSENT_SYSTEM",
+    "reference": "CONSENT-TDB-2025-001",
+    "scopes": ["credit_check", "bank_statement", "collateral_evaluation"],
+    "issued_at": "2024-12-31T10:00:00Z",
+    "expires_at": "2025-12-31T10:00:00Z",
+    "hash": "sha256:abc123def456..."
+  },
+  "collateral": {
+    "type": "Vehicle",
+    "plateNo": "УНН-1234",
+    "brand": "Toyota",
+    "model": "Prius",
+    "yearMade": 2020,
+    "declared_value": 25000000
+  },
+  "third_party_data": {
+    "mongolbank_credit": {
+      "score": 662,
+      "status": "fair",
+      "open_accounts": 3,
+      "total_debt_mnt": 5785000
+    },
+    "social_security": {
+      "employment_status": "active",
+      "current_employer": "ТАВАН БОГД ФИНАНС ББСБ",
+      "monthly_salary": 4200000,
+      "employment_duration_months": 18
+    }
+  },
+  "callback_url": "https://your-bank.mn/webhooks/underwriting-result"
 }
 ```
 
-## 3. Borrower Identity File: `borrower.json`
-Captures the borrower data we need before scoring. When policy prevents shipping direct identifiers, use hashes or aliases while supplying the original documents in `attachments/`.
+### Required Fields
 
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `regnum` | string | yes | Citizen registration number (hash or token if redaction required). |
-| `full_name` | string | yes | Full name in Cyrillic (token such as `CLIENT_A` acceptable if ID copy is attached). |
-| `dob` | string (ISO date) | yes | Date of birth. |
-| `primary_phone` | string | yes | Main mobile number or masked alias. |
-| `email` | string | no | Shared contact inbox if applicant email may not be stored. |
-| `employer` | object | no | Employer details matching social insurance source. |
-| `employer.name` | string | no | Legal entity name. |
-| `employer.regnum` | string | no | Employer registration number. |
-| `household_size` | integer | no | Optional for affordability heuristics. |
+| Field | Type | Description |
+|-------|------|-------------|
+| `job_id` | string | Your internal loan application ID |
+| `tenant_id` | string | Your bank code (TDB or TBF) |
+| `applicant` | object | Borrower information |
+| `loan` | object | Loan request details |
+| `documents.bank_statement_url` | URL | Secure PDF download link |
+| `consent_artifact` | object | Customer consent record |
+| `collateral` | object | Collateral details (if applicable) |
+| `third_party_data` | object | Credit bureau & social insurance data |
+| `callback_url` | URL | Your webhook endpoint |
 
-## 4. Loan Request File: `loan_request.json`
-This file describes the requested facility. Multiple facilities may be provided using an array; most partners submit a single loan object.
+---
+
+## HMAC Signature Authentication
+
+### Signature Generation (Python Example)
+
+```python
+import json
+import hmac
+import hashlib
+import base64
+import requests
+
+def create_signature(payload, tenant_secret):
+    # Convert payload to JSON bytes
+    body = json.dumps(payload, separators=(',', ':'), ensure_ascii=False).encode()
+
+    # Create HMAC-SHA256 signature
+    signature = base64.b64encode(
+        hmac.new(tenant_secret.encode(), body, hashlib.sha256).digest()
+    ).decode()
+
+    return signature, body
+
+# Usage
+payload = {...}  # Your loan application data
+signature, body = create_signature(payload, "YOUR_TENANT_SECRET")
+
+response = requests.post(
+    'https://uw-api.softmax.mn/v1/underwrite',
+    data=body,
+    headers={
+        'X-Api-Key': 'YOUR_API_KEY',
+        'X-Signature': signature,
+        'Content-Type': 'application/json'
+    }
+)
+```
+
+### Signature Generation (JavaScript Example)
+
+```javascript
+const crypto = require('crypto');
+const axios = require('axios');
+
+function createSignature(payload, tenantSecret) {
+    const body = JSON.stringify(payload);
+    const signature = crypto
+        .createHmac('sha256', tenantSecret)
+        .update(body)
+        .digest('base64');
+    return { signature, body };
+}
+
+// Usage
+const payload = {...};  // Your loan application data
+const { signature, body } = createSignature(payload, 'YOUR_TENANT_SECRET');
+
+const response = await axios.post('https://uw-api.softmax.mn/v1/underwrite', body, {
+    headers: {
+        'X-Api-Key': 'YOUR_API_KEY',
+        'X-Signature': signature,
+        'Content-Type': 'application/json'
+    }
+});
+```
+
+---
+
+## Response Format
+
+### Immediate Response (202 Accepted)
 
 ```json
 {
-  "currency": "MNT",
-  "amount": 50000000,
-  "term_months": 60,
-  "product_type": "consumer_installment",
-  "interest_rate_annual_pct": 18.0,
-  "repayment_frequency": "monthly",
-  "purpose": "home_improvement",
-  "requested_disbursement_date": "2025-10-01"
+  "job_id": "uwo_1234567890abcdef",
+  "status": "queued"
 }
 ```
 
-### Required fields
-- `currency`: ISO 4217 code (`MNT`, `USD`).
-- `amount`: numeric, rounded to the smallest currency unit.
-- `term_months`: integer greater than zero.
-- `product_type`: string aligned with your internal catalog (examples: `consumer_installment`, `business_working_capital`).
+### Job Status Response
 
-### Optional fields
-- `interest_rate_annual_pct`, `repayment_frequency`, `purpose`, `requested_disbursement_date`, `co_borrowers` (array), `comments`.
-
-## 5. Bank Statements Directory: `bank_statements/`
-- Provide one PDF per deposit account used for underwriting.
-- File name pattern: `<bank_code>_<account_reference>_<currency>.pdf` (example: `KHAN_ACC001_MNT.pdf`). Use an internal account reference that maps back on your side rather than exposing the full account number when possible.
-- Each PDF must contain at least the last 6 months of activity and include opening and closing balances.
-- When multiple statements are needed because of page limits, append `_partN` before the extension (`KHAN_ACC001_MNT_part2.pdf`).
-- Optional `metadata.json` per directory to list account level details that cannot be captured from the PDF.
-
-Example `metadata.json`:
 ```json
 {
-  "accounts": [
+  "job_id": "uwo_1234567890abcdef",
+  "status": "completed",
+  "client_job_id": "TDB-2025-0001",
+  "decision": "APPROVE",
+  "risk_score": 0.25,
+  "interest_rate_suggestion": 12.5,
+  "memo_markdown": "# Credit Analysis Report\n\n## Executive Summary\n\n**Borrower:** Батбаяр Доржийн\n**Loan Amount:** ₮50,000,000\n**Recommendation:** **APPROVE**\n\n## Income Analysis\n\n**Bank Statement Summary:**\n- Average Monthly Income: ₮4,200,000\n- Transaction Volume: 2,384 transactions\n- Income Stability: High (coefficient of variation: 0.15)\n\n**Social Insurance Verification:**\n- Current Employer: ТАВАН БОГД ФИНАНС ББСБ\n- Employment Duration: 18 months\n- Salary Verification: ₮4,200,000 monthly\n\n## Credit Risk Assessment\n\n**Credit Bureau Analysis:**\n- Credit Score: 662 (Fair)\n- Open Accounts: 3\n- Total Outstanding Debt: ₮5,785,000\n- Payment History: 1 late payment (< 30 days) in last 12 months\n\n**Debt-to-Income Ratio:** 13.8% (Excellent)\n\n## Collateral Evaluation\n\n**Vehicle Details:**\n- 2020 Toyota Prius\n- Estimated Market Value: ₮28,500,000\n- Loan-to-Value Ratio: 87.7% (Acceptable)\n\n## Risk Factors\n\n**Positive Factors:**\n- Stable employment (18+ months)\n- Strong income-to-loan ratio (1:12)\n- Low debt burden\n- Valuable collateral\n\n**Risk Considerations:**\n- Recent credit inquiry (within 6 months)\n- Vehicle depreciation risk\n\n## Final Recommendation\n\n**APPROVE** with suggested interest rate of **12.5%** APR.\n\n**Risk Score:** Low (0.25/1.00)\n\n**Recommended Terms:**\n- Principal: ₮50,000,000\n- Term: 36 months\n- Monthly Payment: ₮1,756,000\n- Interest Rate: 12.5% APR\n\n*Generated by Softmax Underwriting Copilot*",
+  "memo_pdf_url": "https://softmax-reports.s3.amazonaws.com/reports/TDB-2025-0001.pdf"
+}
+```
+
+### Status Values
+
+| Status | Description |
+|--------|-------------|
+| `queued` | Job accepted and waiting to process |
+| `processing` | Analyzing documents and data |
+| `completed` | Analysis finished successfully |
+| `failed` | Processing failed (check error details) |
+
+---
+
+## Webhook Integration
+
+### Webhook Payload
+
+When analysis completes, we'll POST to your `callback_url`:
+
+```json
+{
+  "job_id": "uwo_1234567890abcdef",
+  "client_job_id": "TDB-2025-0001",
+  "status": "completed",
+  "decision": "APPROVE",
+  "risk_score": 0.25,
+  "interest_rate_suggestion": 12.5,
+  "timestamp": "2025-09-26T14:30:00Z",
+  "processing_time_seconds": 45
+}
+```
+
+### Webhook Endpoint Requirements
+
+Your webhook endpoint should:
+- Accept POST requests
+- Return HTTP 200 status for successful receipt
+- Handle potential duplicate deliveries (idempotent)
+- Respond within 30 seconds
+- Use HTTPS
+
+### Example Webhook Handler (Python/Flask)
+
+```python
+from flask import Flask, request, jsonify
+import logging
+
+app = Flask(__name__)
+
+@app.route('/webhooks/underwriting-result', methods=['POST'])
+def handle_underwriting_result():
+    try:
+        data = request.get_json()
+        job_id = data['job_id']
+        client_job_id = data['client_job_id']
+        decision = data['decision']
+
+        # Update your loan application status
+        update_loan_status(client_job_id, decision, data)
+
+        # Log the result
+        logging.info(f"Underwriting completed for {client_job_id}: {decision}")
+
+        return jsonify({"status": "received"}), 200
+
+    except Exception as e:
+        logging.error(f"Webhook processing failed: {e}")
+        return jsonify({"error": "processing failed"}), 500
+```
+
+---
+
+## Error Handling
+
+### Common HTTP Status Codes
+
+| Code | Meaning | Action |
+|------|---------|---------|
+| 202 | Accepted | Job queued successfully |
+| 400 | Bad Request | Check payload format |
+| 401 | Unauthorized | Verify API key and signature |
+| 422 | Validation Error | Fix missing/invalid fields |
+| 429 | Rate Limited | Slow down request rate |
+| 500 | Server Error | Retry after delay |
+
+### Validation Error Example
+
+```json
+{
+  "detail": [
     {
-      "bank_code": "KHAN",
-      "account_reference": "ACC001",
-      "currency": "MNT",
-      "account_type": "SAVINGS",
-      "holder_alias": "CLIENT_A"
+      "type": "missing",
+      "loc": ["body", "consent_artifact"],
+      "msg": "Field required"
     }
   ]
 }
 ```
 
-## 6. Social Insurance Data: `social_insurance/raw.json`
-- Provide the unmodified API response received from the General Authority of Social Insurance.
-- Ensure the JSON includes the request block, response list data, and computed totals when available.
-- If multiple sources or time ranges are provided, include them as an array under `responses` inside the same JSON.
-- Make sure numeric fields remain numeric (do not export as strings).
-- If PII must be redacted, hash identifiers but keep the hash stable across submissions so we can join records.
+---
 
-## 7. Credit Bureau Data: `credit_bureau/raw.json`
-- Submit the complete JSON returned by the credit bureau vendor (e.g., Mongolian Credit Bureau, TransUnion).
-- The object must at least include: `bureau`, `pull`, `subject`, `score`, `summary`, and `accounts` sections.
-- Replace direct identifiers inside `subject` with aliases if your policy requires, but preserve structure (for example, `fullNameAlias`, `regnumHash`).
-- If supporting PDFs are required by regulation, place them inside `credit_bureau/attachments/` with meaningful names.
+## Data Security & Privacy
 
-## 8. Collateral Information: `collateral.json`
-Provide sufficient structure for the market search and valuation engine.
+### Security Measures
+
+- **Encryption in Transit:** All API calls use TLS 1.3
+- **Data Encryption at Rest:** Sensitive data encrypted with AES-256
+- **HMAC Authentication:** Request integrity verification
+- **Access Logging:** All API access logged for audit
+- **Data Retention:** Customer data deleted after 90 days
+
+### PII Handling
+
+- Citizen IDs are masked in logs and reports
+- Personal information is encrypted in database
+- PDF files are automatically deleted after processing
+- Credit memos exclude raw personal data
+
+---
+
+## Rate Limits & Performance
+
+### Rate Limits
+
+- **Per Tenant:** 60 requests per minute
+- **Burst Capacity:** Up to 100 requests in 60 seconds
+- **Daily Limit:** 5,000 requests per day
+
+### Performance Expectations
+
+- **API Response Time:** < 1 second (submission)
+- **Processing Time:** 30-120 seconds (typical)
+- **Availability:** 99.9% uptime SLA
+- **Webhook Delivery:** 30-second timeout
+
+---
+
+## Testing & Validation
+
+### Test Mode
+
+Use test data for integration:
 
 ```json
 {
-  "type": "real_estate",
-  "name": "Alpha Zone 3 oroo 80 mkv",
-  "size_m2": 80,
-  "city": "Ulaanbaatar",
-  "district": "Khan-Uul",
-  "block": "Alpha Zone Tower B",
-  "floor": 15,
-  "parking": true,
-  "documents": ["deed_placeholder.pdf"],
-  "notes": "Include both Cyrillic and Latin aliases when available."
+  "job_id": "TEST-2025-001",
+  "applicant": {
+    "citizen_id": "TEST12345678",
+    "full_name": "Test Applicant",
+    "phone": "+976-99999999"
+  },
+  "documents": {
+    "bank_statement_url": "https://your-test-storage.com/test-statement.pdf"
+  }
 }
 ```
 
-### Required fields
-- `type`: one of `real_estate`, `vehicle`, `cash_deposit`, `other`.
-- `name`: human readable identifier. For real estate, include building or project name plus unit type.
-- `size_m2`: numeric for real estate. For vehicles, use `vehicle_spec` instead.
+### Validation Checklist
 
-### Optional enrichments
-- `aliases`: array of strings for alternative spellings (useful for search).
-- `valuation_override_mnt`: numeric if the bank already has an internal value.
-- `lien_status`: `free`, `encumbered`, etc.
-- `documents`: list of filenames residing in `attachments/`.
+- [ ] HMAC signature generates correctly
+- [ ] PDF URLs are accessible from Softmax servers
+- [ ] Webhook endpoint responds with HTTP 200
+- [ ] Error handling implemented for all status codes
+- [ ] Retry logic for failed requests
+- [ ] Logging for audit trail
 
-## 9. Additional Attachments
-Place supporting documents (IDs, business licenses, tax filings) under `attachments/`. Use descriptive English file names (for example `attachments/tax_return_2024.pdf`).
+---
 
-## 10. Submission Checklist
-- [ ] Archive named `job_<job_id>.zip` with matching directory name.
-- [ ] `manifest.json`, `borrower.json`, `loan_request.json`, and `collateral.json` present and validated against this guide.
-- [ ] At least one bank statement PDF supplied; file names follow the specified pattern.
-- [ ] Social insurance and credit bureau JSON files are raw, machine readable, and untruncated (with hashed aliases if required by policy).
-- [ ] All JSON passes linting (`python -m json.tool <file>` can be used before submission).
-- [ ] Encryption key shared with Softmax ahead of submission when using encrypted archives.
+## Sample Integration Code
 
-## 11. Support
-For onboarding or schema questions, contact `integrations@softmax.mn`. Include the `job_id` in your email subject so that we can trace the relevant submission quickly.
+### Complete Integration Example (Python)
+
+```python
+import json
+import hmac
+import hashlib
+import base64
+import requests
+import time
+from typing import Dict, Any
+
+class SoftmaxUnderwritingClient:
+    def __init__(self, api_key: str, tenant_secret: str):
+        self.api_key = api_key
+        self.tenant_secret = tenant_secret
+        self.base_url = "https://uw-api.softmax.mn"
+
+    def create_signature(self, payload: Dict[str, Any]) -> tuple[str, bytes]:
+        body = json.dumps(payload, separators=(',', ':'), ensure_ascii=False).encode()
+        signature = base64.b64encode(
+            hmac.new(self.tenant_secret.encode(), body, hashlib.sha256).digest()
+        ).decode()
+        return signature, body
+
+    def submit_loan_application(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        signature, body = self.create_signature(payload)
+
+        response = requests.post(
+            f"{self.base_url}/v1/underwrite",
+            data=body,
+            headers={
+                'X-Api-Key': self.api_key,
+                'X-Signature': signature,
+                'Content-Type': 'application/json'
+            },
+            timeout=30
+        )
+
+        if response.status_code == 202:
+            return response.json()
+        else:
+            raise Exception(f"API Error {response.status_code}: {response.text}")
+
+    def get_job_status(self, job_id: str) -> Dict[str, Any]:
+        response = requests.get(
+            f"{self.base_url}/v1/jobs/{job_id}",
+            headers={'X-Api-Key': self.api_key},
+            timeout=10
+        )
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Status Error {response.status_code}: {response.text}")
+
+    def process_loan_application(self, loan_data: Dict[str, Any]) -> Dict[str, Any]:
+        # Submit application
+        result = self.submit_loan_application(loan_data)
+        job_id = result['job_id']
+
+        # Poll for completion
+        max_attempts = 30  # 5 minutes max
+        for attempt in range(max_attempts):
+            status = self.get_job_status(job_id)
+
+            if status['status'] == 'completed':
+                return status
+            elif status['status'] == 'failed':
+                raise Exception(f"Job failed: {status}")
+
+            time.sleep(10)  # Wait 10 seconds
+
+        raise Exception("Job processing timeout")
+
+# Usage
+client = SoftmaxUnderwritingClient(
+    api_key="YOUR_API_KEY",
+    tenant_secret="YOUR_TENANT_SECRET"
+)
+
+loan_application = {
+    # ... your loan application data
+}
+
+try:
+    result = client.process_loan_application(loan_application)
+    print(f"Decision: {result['decision']}")
+    print(f"Risk Score: {result['risk_score']}")
+    print(f"Suggested Rate: {result['interest_rate_suggestion']}%")
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+---
+
+## Support & Contact
+
+### Technical Support
+
+- **Email:** support@softmax.mn
+- **Phone:** +976-7777-0000
+- **Hours:** 9:00-18:00 (Mongolia Time)
+- **SLA:** 4-hour response for production issues
+
+### Documentation Updates
+
+This guide is versioned and updated regularly. Check for updates at:
+`https://docs.softmax.mn/underwriting-api/`
+
+### Integration Assistance
+
+Our team provides free integration assistance:
+- API walkthrough sessions
+- Code review and optimization
+- Load testing support
+- Production go-live support
+
+---
+
+**Last Updated:** September 26, 2025
+**API Version:** v1
+**Document Version:** 1.0
