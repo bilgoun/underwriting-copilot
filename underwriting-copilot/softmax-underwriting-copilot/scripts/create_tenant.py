@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.config import get_settings
-from app.db import session_scope
+from app.db import hash_secret, session_scope
 from app.models import Tenant
 
 
@@ -46,11 +46,14 @@ def create_tenant(name: str, client_id: str) -> dict:
         tenant_secret = secrets.token_urlsafe(32)
         webhook_secret = secrets.token_urlsafe(32)
 
+        # Hash the client secret before storing
+        hashed_client_secret = hash_secret(client_secret)
+
         # Create new tenant
         tenant = Tenant(
             name=name,
             oauth_client_id=client_id,
-            oauth_client_secret=client_secret,
+            oauth_client_secret=hashed_client_secret,
             tenant_secret=tenant_secret,
             webhook_secret=webhook_secret,
             rate_limit_rps=10,
