@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.config import get_settings
-from app.database import get_sync_session
+from app.db import session_scope
 from app.models import Tenant
 
 
@@ -20,7 +20,7 @@ def generate_client_secret(length: int = 32) -> str:
     return secrets.token_urlsafe(length)
 
 
-def create_tenant(name: str, client_id: str, scope: str) -> dict:
+def create_tenant(name: str, client_id: str) -> dict:
     """Create a new tenant with the given parameters."""
     settings = get_settings()
 
@@ -28,28 +28,32 @@ def create_tenant(name: str, client_id: str, scope: str) -> dict:
     client_secret = generate_client_secret()
 
     # Create tenant in database
-    with get_sync_session() as session:
-        # Check if tenant with this client_id already exists
-        existing = session.query(Tenant).filter_by(client_id=client_id).first()
+    with session_scope() as session:
+        # Check if tenant with this oauth_client_id already exists
+        existing = session.query(Tenant).filter_by(oauth_client_id=client_id).first()
         if existing:
             print(f"❌ Tenant with client_id '{client_id}' already exists!")
             print(f"   Tenant ID: {existing.id}")
             print(f"   Name: {existing.name}")
-            print(f"   Scope: {existing.scope}")
             return {
                 "error": "Tenant already exists",
                 "tenant_id": existing.id,
                 "name": existing.name,
-                "client_id": existing.client_id,
-                "scope": existing.scope,
+                "client_id": existing.oauth_client_id,
             }
+
+        # Generate secure secrets for the tenant
+        tenant_secret = secrets.token_urlsafe(32)
+        webhook_secret = secrets.token_urlsafe(32)
 
         # Create new tenant
         tenant = Tenant(
             name=name,
-            client_id=client_id,
-            client_secret=client_secret,
-            scope=scope,
+            oauth_client_id=client_id,
+            oauth_client_secret=client_secret,
+            tenant_secret=tenant_secret,
+            webhook_secret=webhook_secret,
+            rate_limit_rps=10,
         )
         session.add(tenant)
         session.commit()
@@ -58,9 +62,10 @@ def create_tenant(name: str, client_id: str, scope: str) -> dict:
         return {
             "tenant_id": tenant.id,
             "name": tenant.name,
-            "client_id": tenant.client_id,
+            "client_id": tenant.oauth_client_id,
             "client_secret": client_secret,
-            "scope": tenant.scope,
+            "tenant_secret": tenant_secret,
+            "webhook_secret": webhook_secret,
         }
 
 
@@ -78,20 +83,13 @@ def main():
         required=True,
         help="Unique client ID (e.g., 'admin_prod', 'bank_xyz')",
     )
-    parser.add_argument(
-        "--scope",
-        default="dashboard:read",
-        help="OAuth2 scope (e.g., 'dashboard:admin', 'dashboard:read')",
-    )
-
     args = parser.parse_args()
 
     print(f"Creating tenant: {args.name}")
     print(f"Client ID: {args.client_id}")
-    print(f"Scope: {args.scope}")
     print()
 
-    result = create_tenant(args.name, args.client_id, args.scope)
+    result = create_tenant(args.name, args.client_id)
 
     if "error" in result:
         sys.exit(1)
@@ -102,15 +100,19 @@ def main():
     print("IMPORTANT: Save these credentials securely!")
     print("=" * 60)
     print()
-    print(f"Tenant ID:      {result['tenant_id']}")
-    print(f"Name:           {result['name']}")
-    print(f"Client ID:      {result['client_id']}")
-    print(f"Client Secret:  {result['client_secret']}")
-    print(f"Scope:          {result['scope']}")
+    print(f"Tenant ID:       {result['tenant_id']}")
+    print(f"Name:            {result['name']}")
+    print(f"Client ID:       {result['client_id']}")
+    print(f"Client Secret:   {result['client_secret']}")
+    print(f"Tenant Secret:   {result['tenant_secret']}")
+    print(f"Webhook Secret:  {result['webhook_secret']}")
     print()
     print("=" * 60)
     print()
-    print("Login to the dashboard at: https://console.softmax.mn")
+    print("Use these credentials to:")
+    print("1. Login to dashboard: https://console.softmax.mn")
+    print("2. Make API requests with OAuth2 authentication")
+    print("3. Sign webhook deliveries")
     print()
 
 
