@@ -11,7 +11,8 @@ def strToFloat(value_string):
         if value_string == "":
             logger.debug("Empty string provided to strToFloat")
             return None
-        value_string = value_string.replace("-", "").replace(",", "")
+        # Remove spaces, dashes, and commas before converting
+        value_string = value_string.replace(" ", "").replace("-", "").replace(",", "")
         value_float = float(value_string)
         logger.debug(f"Converted value: {value_float}")
         return value_float
