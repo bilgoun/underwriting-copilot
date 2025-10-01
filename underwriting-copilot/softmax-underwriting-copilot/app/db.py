@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 from contextlib import contextmanager
 from typing import Dict, Generator, Optional
 
-from sqlalchemy import create_engine, select
+from sqlalchemy import case, create_engine, func, select
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session, sessionmaker, selectinload
 
 from .config import get_settings
 from .models import Audit, Base, Features, Job, JobStatus, Payload, Result, Tenant
@@ -209,3 +210,99 @@ def reserve_next_job(session: Session, tenant_id: str) -> Optional[Job]:
         session.add(job)
     return job
 
+
+def list_jobs_for_tenant(
+    session: Session,
+    tenant_id: str,
+    *,
+    limit: int = 50,
+    offset: int = 0,
+    status: Optional[JobStatus] = None,
+) -> list[Job]:
+    stmt = (
+        select(Job)
+        .where(Job.tenant_id == tenant_id)
+        .order_by(Job.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+        .options(
+            selectinload(Job.payload),
+            selectinload(Job.result),
+            selectinload(Job.features),
+            selectinload(Job.audits),
+        )
+    )
+    if status is not None:
+        stmt = stmt.where(Job.status == status)
+    result = session.execute(stmt)
+    return list(result.scalars())
+
+
+def get_job_with_details(session: Session, job_id: str) -> Optional[Job]:
+    stmt = (
+        select(Job)
+        .where(Job.id == job_id)
+        .options(
+            selectinload(Job.payload),
+            selectinload(Job.result),
+            selectinload(Job.features),
+            selectinload(Job.audits),
+            selectinload(Job.tenant),
+        )
+    )
+    return session.execute(stmt).scalar_one_or_none()
+
+
+def list_tenants(session: Session) -> list[Tenant]:
+    return list(session.execute(select(Tenant)).scalars())
+
+
+def list_recent_jobs(
+    session: Session,
+    *,
+    limit: int = 50,
+    tenant_id: Optional[str] = None,
+) -> list[Job]:
+    stmt = (
+        select(Job)
+        .order_by(Job.created_at.desc())
+        .limit(limit)
+        .options(
+            selectinload(Job.payload),
+            selectinload(Job.result),
+            selectinload(Job.features),
+            selectinload(Job.audits),
+            selectinload(Job.tenant),
+        )
+    )
+    if tenant_id is not None:
+        stmt = stmt.where(Job.tenant_id == tenant_id)
+    return list(session.execute(stmt).scalars())
+
+
+def tenant_job_stats(
+    session: Session, since: Optional[dt.datetime] = None
+) -> dict[str, dict[str, float | int | None]]:
+    processing_expr = func.extract("epoch", Job.updated_at - Job.created_at)
+    stmt = select(
+        Job.tenant_id,
+        func.count().label("total"),
+        func.sum(case((Job.status == JobStatus.failed, 1), else_=0)).label("failed"),
+        func.sum(case((Job.status == JobStatus.succeeded, 1), else_=0)).label("succeeded"),
+        func.avg(case((Job.status == JobStatus.succeeded, processing_expr), else_=None)).label(
+            "avg_processing"
+        ),
+    )
+    if since is not None:
+        stmt = stmt.where(Job.created_at >= since)
+    stmt = stmt.group_by(Job.tenant_id)
+
+    stats: dict[str, dict[str, Optional[float]]] = {}
+    for row in session.execute(stmt):
+        stats[row.tenant_id] = {
+            "total": int(row.total or 0),
+            "failed": int(row.failed or 0),
+            "succeeded": int(row.succeeded or 0),
+            "avg_processing": float(row.avg_processing) if row.avg_processing is not None else None,
+        }
+    return stats

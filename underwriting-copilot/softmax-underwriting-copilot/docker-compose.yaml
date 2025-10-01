@@ -1,4 +1,5 @@
 version: "3.9"
+
 services:
   api:
     build:
@@ -10,11 +11,18 @@ services:
       REDIS_URL: redis://redis:6379/0
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set encryption key}
       SANDBOX_MODE: "true"
+      OTEL_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_SERVICE_NAME: softmax-underwriting-api
+      OTEL_SERVICE_NAMESPACE: softmax-underwriting
+      OTEL_METRIC_EXPORT_INTERVAL_MS: "15000"
     depends_on:
       - postgres
       - redis
+      - otel-collector
     ports:
       - "8080:8080"
+
   worker:
     build:
       context: .
@@ -24,9 +32,16 @@ services:
       REDIS_URL: redis://redis:6379/0
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:?set encryption key}
       SANDBOX_MODE: "true"
+      OTEL_ENABLED: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_SERVICE_NAME: softmax-underwriting-worker
+      OTEL_SERVICE_NAMESPACE: softmax-underwriting
+      OTEL_METRIC_EXPORT_INTERVAL_MS: "15000"
     depends_on:
       - postgres
       - redis
+      - otel-collector
+
   postgres:
     image: postgres:15
     environment:
@@ -37,9 +52,77 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
   redis:
     image: redis:7
     ports:
       - "6379:6379"
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.94.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./infra/monitoring/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4318:4318"
+      - "9464:9464"
+    depends_on:
+      - tempo
+      - loki
+
+  tempo:
+    image: grafana/tempo:2.4.1
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./infra/monitoring/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    ports:
+      - "3200:3200"
+
+  loki:
+    image: grafana/loki:2.9.2
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./infra/monitoring/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - prom_data:/prometheus
+      - ./infra/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./infra/monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+
 volumes:
   postgres_data:
+  prom_data:
+  grafana_data:
+  tempo_data:
+  loki_data:

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { dashboardApi, JobSummary, DashboardSummary } from '../api/client'
 import { useAuth } from '../utils/auth'
 import { Clock, CheckCircle, Activity, LogOut, TrendingUp } from 'lucide-react'
+import MarkdownRenderer from '../components/MarkdownRenderer'
 
 export default function BankDashboard() {
   const [selectedJob, setSelectedJob] = useState<string | null>(null)
@@ -270,15 +271,15 @@ export default function BankDashboard() {
                 {/* LLM Output */}
                 {jobDetail.llm_output_markdown && (
                   <Section title="LLM Output">
-                    <div style={{
-                      background: '#f7fafc',
-                      padding: '1rem',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      whiteSpace: 'pre-wrap',
-                      color: '#2d3748'
-                    }}>
-                      {jobDetail.llm_output_markdown}
+                    <div
+                      style={{
+                        background: '#f7fafc',
+                        padding: '1rem',
+                        borderRadius: '0.375rem',
+                        border: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <MarkdownRenderer markdown={jobDetail.llm_output_markdown} />
                     </div>
                   </Section>
                 )}

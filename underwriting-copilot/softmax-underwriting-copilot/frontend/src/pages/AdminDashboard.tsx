@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { dashboardApi, JobSummary, TenantOverview } from '../api/client'
 import { useAuth } from '../utils/auth'
 import { Activity, LogOut, Users, AlertTriangle } from 'lucide-react'
+import MarkdownRenderer from '../components/MarkdownRenderer'
 
 export default function AdminDashboard() {
   const [selectedTenant, setSelectedTenant] = useState<string>('')
@@ -341,16 +342,15 @@ export default function AdminDashboard() {
                 {/* LLM Output */}
                 {jobDetail.llm_output_markdown && (
                   <Section title="LLM Output (Credit Memo)">
-                    <div style={{
-                      background: '#f0fff4',
-                      padding: '1rem',
-                      borderRadius: '0.375rem',
-                      fontSize: '0.875rem',
-                      whiteSpace: 'pre-wrap',
-                      color: '#2d3748',
-                      border: '1px solid #9ae6b4'
-                    }}>
-                      {jobDetail.llm_output_markdown}
+                    <div
+                      style={{
+                        background: '#f0fff4',
+                        padding: '1rem',
+                        borderRadius: '0.375rem',
+                        border: '1px solid #9ae6b4',
+                      }}
+                    >
+                      <MarkdownRenderer markdown={jobDetail.llm_output_markdown} />
                     </div>
                   </Section>
                 )}

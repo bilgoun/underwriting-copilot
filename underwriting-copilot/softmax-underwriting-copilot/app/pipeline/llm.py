@@ -5,6 +5,8 @@ import os
 from typing import Any, Dict, Tuple
 
 import requests
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
 
 from ..config import get_settings
 
@@ -17,6 +19,8 @@ SYSTEM_PROMPT = (
     "\n\nВеб хайлтын түүхий үр дүнг задлан шинжилж, боломжит зах зээлийн үнийг тайлбарла."
     "\n\nСанамж: Манай сарын хүүгийн хүрээ 3%-4%. DTI, нийт өрийн үйлчилгээ/орлогын (DSR) харьцаа, LTV зэрэг үндсэн үзүүлэлтүүдийг тооцоолж, эрсдэлд тулгуурлан Accept / Review / Decline шийдвэр болон санал болгосон сарын хүүг мемо дотроо тодорхой бич."
 )
+
+tracer = trace.get_tracer("app.pipeline.llm")
 
 
 def call_gemini_llm(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
@@ -37,12 +41,27 @@ def call_gemini_llm(system_prompt: str, user_prompt: str) -> Dict[str, Any]:
         "systemInstruction": {"parts": [{"text": system_prompt}]},
     }
 
-    response = requests.post(url, headers=headers, json=data, timeout=90)
-    if response.status_code == 200:
-        return response.json()
-    raise RuntimeError(
-        f"Gemini API request failed with status code {response.status_code}: {response.text}"
-    )
+    with tracer.start_as_current_span(
+        "llm.request",
+        attributes={
+            "llm.provider": "gemini",
+            "llm.model": model_name,
+            "http.method": "POST",
+            "http.url": url,
+        },
+    ) as span:
+        response = requests.post(url, headers=headers, json=data, timeout=90)
+        span.set_attribute("http.status_code", response.status_code)
+        if response.status_code == 200:
+            payload = response.json()
+            span.set_attribute("llm.candidates", len(payload.get("candidates", []) or []))
+            return payload
+        error_message = response.text[:200]
+        span.record_exception(RuntimeError(error_message))
+        span.set_status(Status(StatusCode.ERROR, error_message))
+        raise RuntimeError(
+            f"Gemini API request failed with status code {response.status_code}: {response.text}"
+        )
 
 
 def _extract_memo_text(gemini_response: Dict[str, Any]) -> str:
@@ -60,7 +79,10 @@ def _extract_memo_text(gemini_response: Dict[str, Any]) -> str:
 def generate_memo(features: Dict[str, Dict]) -> Tuple[str, Dict[str, Any]]:
     _ = get_settings()  # ensure settings loaded / future config use
     user_prompt = json.dumps(features, ensure_ascii=False)
-    gemini_response = call_gemini_llm(SYSTEM_PROMPT, user_prompt)
-    memo = _extract_memo_text(gemini_response)
-    meta = {"raw_response": gemini_response}
-    return memo, meta
+    with tracer.start_as_current_span("llm.generate_memo") as span:
+        span.set_attribute("llm.input.size_bytes", len(user_prompt.encode("utf-8")))
+        gemini_response = call_gemini_llm(SYSTEM_PROMPT, user_prompt)
+        memo = _extract_memo_text(gemini_response)
+        meta = {"raw_response": gemini_response}
+        span.set_attribute("llm.memo.length", len(memo))
+        return memo, meta

@@ -136,7 +136,7 @@ export default defineConfig({
 ## Data Visibility
 
 ### Bank Dashboard Shows:
-- ✅ Job ID, status, decision, risk score
+- ✅ Job ID, status, decision
 - ✅ Raw input (original data from bank)
 - ✅ LLM output (credit memo)
 - ✅ Audit trail

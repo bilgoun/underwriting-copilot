@@ -60,7 +60,13 @@ except ImportError:
 from opentelemetry._logs import set_logger_provider
 from opentelemetry.sdk._logs import LoggingHandler, LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
-from opentelemetry.exporter.prometheus import PrometheusMetricReader
+try:
+    from opentelemetry.exporter.prometheus import PrometheusMetricReader
+
+    HAS_PROMETHEUS_EXPORTER = True
+except Exception:  # pragma: no cover - optional dependency
+    PrometheusMetricReader = None  # type: ignore
+    HAS_PROMETHEUS_EXPORTER = False
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import (
@@ -130,9 +136,12 @@ def _build_metric_readers(endpoint: str, headers: dict[str, str], resource: Reso
         )
     )
 
-    if _PROMETHEUS_READER is None:
-        _PROMETHEUS_READER = PrometheusMetricReader()
-    readers.append(_PROMETHEUS_READER)
+    if HAS_PROMETHEUS_EXPORTER:
+        if _PROMETHEUS_READER is None:
+            _PROMETHEUS_READER = PrometheusMetricReader()  # type: ignore[call-arg]
+        readers.append(_PROMETHEUS_READER)
+    else:
+        logger.debug("prometheus_exporter_unavailable")
     return readers
 
 

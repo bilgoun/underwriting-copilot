@@ -20,6 +20,12 @@ import sys
 BASE_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BASE_DIR))
 
+try:
+    from app.observability import init_observability
+except Exception:  # pragma: no cover - observability optional on older builds
+    def init_observability(*args: object, **kwargs: object) -> None:  # type: ignore
+        return
+
 
 def _load_env_files() -> None:
     candidate_paths = [BASE_DIR / ".env", BASE_DIR.parent / ".env"]
@@ -37,6 +43,12 @@ def _load_env_files() -> None:
 
 
 _load_env_files()
+
+try:
+    init_observability("simulator")
+except AttributeError:
+    # Older settings schema without OTEL flags; safely ignore
+    pass
 
 from app.pipeline import llm, parser_adapter
 MOCK_DIR = BASE_DIR / "mockdata"

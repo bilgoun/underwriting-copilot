@@ -7,7 +7,7 @@ from typing import Any, Dict, List
 import requests
 import structlog
 
-from ..pipeline import collateral, fuse, llm, parser_adapter, rules
+from ..pipeline import collateral, fuse, llm, parser_adapter
 from ..security import sign_payload
 from ..utils import pdf, storage
 
@@ -69,12 +69,12 @@ class PollingWorker:
                 "status": "succeeded",
                 "decision": decision,
                 "interest_rate_suggestion": meta.get("interest_rate_suggestion"),
-                "risk_score": features.get("Risk_Score"),
+                "risk_score": meta.get("risk_score"),
                 "memo_markdown": memo_markdown,
                 "metadata": {
                     "parser": parse_out,
                     "collateral": collateral_out,
-                    "rules": rules.evaluate(features).to_dict(),
+                    "llm_raw_response": meta.get("raw_response"),
                 },
             }
             response = requests.post(

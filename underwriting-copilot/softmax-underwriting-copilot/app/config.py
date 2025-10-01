@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     port: int = Field(default=8080, alias="PORT")
     host: str = Field(default="0.0.0.0", alias="HOST")
 
+    otel_enabled: bool = Field(default=False, alias="OTEL_ENABLED")
+    otel_service_name: str = Field(default="softmax-underwriting", alias="OTEL_SERVICE_NAME")
+    otel_service_namespace: str = Field(default="softmax", alias="OTEL_SERVICE_NAMESPACE")
+    otel_exporter_otlp_endpoint: str = Field(default="http://otel-collector:4318", alias="OTEL_EXPORTER_OTLP_ENDPOINT")
+    otel_exporter_otlp_headers: Optional[str] = Field(default=None, alias="OTEL_EXPORTER_OTLP_HEADERS")
+    otel_metric_export_interval_ms: int = Field(default=60000, alias="OTEL_METRIC_EXPORT_INTERVAL_MS")
+
     database_url: str = Field(default="postgresql+psycopg://postgres:postgres@localhost:5432/softmax", alias="DATABASE_URL")
     redis_url: Optional[str] = Field(default=None, alias="REDIS_URL")
 
@@ -62,6 +69,18 @@ class Settings(BaseSettings):
     tenants_bootstrap: List[TenantBootstrap] = Field(default_factory=list)
 
     request_id_header: str = Field(default="X-Request-Id")
+
+    def otlp_headers(self) -> dict[str, str]:
+        if not self.otel_exporter_otlp_headers:
+            return {}
+        headers: dict[str, str] = {}
+        pairs = [pair.strip() for pair in self.otel_exporter_otlp_headers.split(",") if pair.strip()]
+        for pair in pairs:
+            if "=" not in pair:
+                continue
+            key, value = pair.split("=", 1)
+            headers[key.strip()] = value.strip()
+        return headers
 
     def resolved_encryption_key(self) -> str:
         if not self.encryption_key:

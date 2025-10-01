@@ -145,3 +145,51 @@ class PollingCompleteRequest(BaseModel):
 class PollingCompleteResponse(BaseModel):
     job_id: str
     status: str
+
+
+class DashboardJobSummary(BaseModel):
+    job_id: str
+    tenant_id: str
+    client_job_id: str
+    status: str
+    decision: Optional[str] = None
+    risk_score: Optional[float] = None
+    created_at: datetime
+    updated_at: datetime
+    processing_seconds: Optional[float] = None
+
+
+class DashboardSummary(BaseModel):
+    total_jobs: int
+    succeeded_jobs: int
+    failed_jobs: int
+    average_processing_seconds: Optional[float] = None
+
+
+class DashboardJobDetail(BaseModel):
+    summary: DashboardJobSummary
+    raw_input: Optional[Dict[str, Any]] = None
+    llm_input: Optional[Dict[str, Any]] = None
+    llm_output_markdown: Optional[str] = None
+    llm_output_metadata: Optional[Dict[str, Any]] = None
+    audits: List[Dict[str, Any]]
+
+
+class DashboardJobsResponse(BaseModel):
+    summary: DashboardSummary
+    jobs: List[DashboardJobSummary]
+
+
+class TenantDashboardSummaryResponse(BaseModel):
+    summary: DashboardSummary
+
+
+class TenantOverview(BaseModel):
+    tenant_id: str
+    name: str
+    total_jobs_24h: int
+    failure_rate_24h: float
+
+
+class AdminTenantOverviewResponse(BaseModel):
+    tenants: List[TenantOverview]

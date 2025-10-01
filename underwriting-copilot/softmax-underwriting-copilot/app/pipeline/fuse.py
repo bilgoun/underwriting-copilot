@@ -1,19 +1,9 @@
 from __future__ import annotations
 
-import statistics
-from typing import Any, Dict, List
-
-
-def _sum_positive(values: List[float]) -> float:
-    return float(sum(v for v in values if v > 0))
-
-
-def _format_period(stats: Dict[str, Any]) -> str:
-    start = stats.get("period_from")
-    end = stats.get("period_to")
-    if start and end:
-        return f"{start} - {end}"
-    return ""
+import json
+from collections import defaultdict
+from datetime import datetime
+from typing import Any, Dict, Optional
 
 
 def fuse_features(
@@ -21,89 +11,209 @@ def fuse_features(
     parser_output: Dict[str, Any],
     collateral_output: Dict[str, Any],
 ) -> Dict[str, Any]:
+    """Assemble the exact LLM input structure from upstream payloads and enrichments."""
     third_party = payload.get("third_party_data", {})
-    mongolbank = third_party.get("mongolbank_credit", {})
-    social = third_party.get("social_security", {})
-    legal = third_party.get("legal_checks", {})
 
-    rows = parser_output.get("rows", [])
-    credits = [float(row[5]) for row in rows if len(row) > 5 and _is_number(row[5])]
-    debits = [float(row[4]) for row in rows if len(row) > 4 and _is_number(row[4])]
+    credit_data = _safe_copy(
+        third_party.get("mongolbank_credit")
+        or payload.get("credit_bureau_data")
+    )
 
-    avg_income = statistics.mean(credits) if credits else 7_000_000
-    total_expense = _sum_positive(debits)
+    social_block = third_party.get("social_security")
+    social_data: Optional[Dict[str, Any]] = None
+    if isinstance(social_block, dict):
+        candidate = social_block.get("response") or social_block.get("data") or social_block
+        if isinstance(candidate, dict):
+            social_data = _safe_copy(candidate)
+    elif payload.get("social_insurance_data"):
+        social_data = _safe_copy(payload.get("social_insurance_data"))
 
-    market = collateral_output.get("market") or {}
-    market_stats = market.get("statistics") or {}
-    market_listings = market.get("listings") or []
-    summarized_listings = [
-        {
-            "title": listing.get("title"),
-            "url": listing.get("url"),
-            "price_mnt": listing.get("price_mnt"),
-            "size_m2": listing.get("size_m2"),
-            "provider": listing.get("provider"),
-        }
-        for listing in market_listings[:5]
-    ]
+    documents = payload.get("documents") or {}
+    bank_summary = _compute_bank_summary(parser_output or {}, documents)
 
-    llm_payload = {
-        "монгол_банкны_өгөгдөл": {
-            "одоогийн_зээлүүд": mongolbank.get("active_loans", 1),
-            "төлөгдөөгүй_өр": mongolbank.get("outstanding_debt", 5_000_000),
-            "өмнөх_дефолтууд": mongolbank.get("defaults", 0),
-            "зээл_төлөлтийн_тогтвортой_байдал": mongolbank.get("repayment_regular", "маш сайн"),
-            "хадгаламж": mongolbank.get("savings", 3_000_000),
-            "итгэлцэл": mongolbank.get("trust_score", 0),
-        },
-        "нийгмийн_даатгалын_өгөгдөл": {
-            "сарын_цалин": social.get("monthly_salary", 2_000_000),
-            "ажил_эрхлэлтийн_хугацаа": social.get("employment_duration", "5 жил"),
-            "өсөлт/бууралт": social.get("income_trend", "жил бүр өссөн"),
-            "ажил_эрхлэлтийн_тогтвортой_байдал": social.get("employment_stability", "тогтмол, завсаргүй"),
-            "нийгмийн_даатгал_төлсөн": social.get("paid", True),
-        },
-        "дансны_хуулга_өгөгдөл": {
-            "нийт_хамарсан_хугацаа": _format_period(parser_output.get("stats", {}))
-            or "2024 оны 9 сараас 2025 оны 3 сар хүртэл 7 сарын хугацаа",
-            "дундаж_сарын_орлого": round(avg_income),
-            "орлогын_хэлбэлзэл": "тогтмол" if not credits else "тогтмол",
-            "орлого_тасалдсан_сарууд": False,
-            "зардлын_хэв_маяг": {
-                "тогтмол_бизнесийн_зардлууд": total_expense,
-                "Toп-3 зардлууд": "түрээс: 1500000, хүнс: 800000, такси: 500000",
-                "сэжигтэй_гүйлгээ_илрүүлсэн": True,
-                "шөнийн цагийн гүйлгээ": 2_000_000,
-                "мөрийтэй тоглоомчин байх магадлал": "15%",
-            },
-        },
-        "гэмт хэргийн түүх": {
-            "гэмт хэргийн түүх": legal.get("criminal_record", False),
-            "төлөгдөөгүй татвар, төлбөр болон торгууль": legal.get("unpaid_fines", 20_000),
-            "шүүхийн маргаан": legal.get("pending_cases", False),
-        },
-        "барьцаа_хөрөнгийн_үнэлгээний_өгөгдөл": {
-            "хөрөнгийн_төрөл": payload.get("collateral", {}).get("type", "машин"),
-            "үнэлгээ": str(collateral_output.get("value", payload.get("collateral", {}).get("declared_value", 0))),
-            "итгэлцүүр": collateral_output.get("confidence"),
-            "эх_сурвалж": collateral_output.get("source"),
-            "зах_зээлийн_үнэд_суурилсан_үнэлгээ": {
-                "жишиг_үнэлгээ": collateral_output.get("market", {}).get("estimated_value_mnt"),
-                "статистик": market_stats,
-                "эх_сурвалжууд": summarized_listings,
-                "зарын_тоо": market.get("samples", len(market_listings)),
-            },
-        },
-        "Risk_Score": collateral_output.get("risk_score", 0.43),
-        "хүссэн_зээлийн_хэмжээ": payload.get("loan", {}).get("amount", 0),
+    collateral_section = _build_collateral_section(
+        payload.get("collateral") or payload.get("collateral_offered"),
+        collateral_output,
+    )
+
+    loan_request = _build_loan_request(payload.get("loan") or payload.get("loan_request"))
+
+    llm_input: Dict[str, Any] = {}
+    if credit_data:
+        llm_input["credit_bureau_data"] = credit_data
+    if loan_request:
+        llm_input["loan_request"] = loan_request
+    if social_data:
+        llm_input["social_insurance_data"] = social_data
+    if bank_summary:
+        llm_input["bank_statement"] = bank_summary
+    if collateral_section:
+        llm_input["collateral"] = collateral_section
+
+    return llm_input
+
+
+def _safe_copy(value: Any) -> Any:
+    if value is None:
+        return None
+    return json.loads(json.dumps(value, ensure_ascii=False))
+
+
+def _build_loan_request(source: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    if not isinstance(source, dict):
+        return None
+
+    mapping = {
+        "amountMNT": source.get("amount") or source.get("amountMNT"),
+        "termMonths": source.get("term_months") or source.get("termMonths"),
+        "aprPct": source.get("aprPct") or source.get("apr_pct"),
+        "estimatedMonthlyInstallmentMNT": source.get("estimatedMonthlyInstallmentMNT"),
+        "purpose": source.get("purpose"),
+        "type": source.get("type"),
     }
+    cleaned = {key: value for key, value in mapping.items() if value is not None}
+    return cleaned or None
 
-    return llm_payload
+
+def _build_collateral_section(
+    collateral_payload: Any,
+    valuation: Optional[Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
+    original: Optional[Any]
+    if isinstance(collateral_payload, list):
+        original = _safe_copy(collateral_payload[0]) if collateral_payload else None
+    elif isinstance(collateral_payload, dict):
+        original = _safe_copy(collateral_payload)
+    else:
+        original = None
+
+    valuation_copy = _safe_copy(valuation) if valuation else None
+    if isinstance(valuation_copy, dict) and "risk_score" in valuation_copy:
+        valuation_copy = {k: v for k, v in valuation_copy.items() if k != "risk_score"}
+
+    if not original and not valuation_copy:
+        return None
+
+    section: Dict[str, Any] = {}
+    if original:
+        section["original_payload"] = original
+
+    if isinstance(valuation_copy, dict):
+        section["valuation"] = valuation_copy
+        predicted_value = None
+        if "value" in valuation_copy:
+            predicted_value = valuation_copy.get("value")
+        if "estimatedValue" in valuation_copy:
+            predicted_value = valuation_copy.get("estimatedValue")
+        if predicted_value is not None:
+            section["predicted_value_mnt"] = predicted_value
+
+        valuation_details = valuation_copy.get("valuation")
+        if isinstance(valuation_details, dict):
+            details_copy = _safe_copy(valuation_details)
+            details_copy.pop("risk_score", None)
+            section["valuation_details"] = details_copy
+            raw_response = details_copy.get("raw_response")
+            if raw_response is not None:
+                section["ml_response_raw"] = raw_response
+            ml_response = details_copy.get("ml_response")
+            if ml_response is not None:
+                section["ml_response_json"] = ml_response
+
+        market = valuation_copy.get("market")
+        if isinstance(market, dict):
+            section["market_insights"] = _safe_copy(market)
+
+    elif valuation_copy is not None:
+        section["valuation"] = valuation_copy
+
+    return section
 
 
-def _is_number(value: Any) -> bool:
+def _compute_bank_summary(
+    parser_output: Dict[str, Any],
+    documents: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    rows = parser_output.get("rows") or []
+    monthly_totals: Dict[str, float] = defaultdict(float)
+    first_date: Optional[datetime] = None
+    last_date: Optional[datetime] = None
+
+    for row in rows:
+        if not isinstance(row, list) or not row:
+            continue
+        dt_obj = _parse_timestamp(row[0])
+        if dt_obj:
+            if first_date is None or dt_obj < first_date:
+                first_date = dt_obj
+            if last_date is None or dt_obj > last_date:
+                last_date = dt_obj
+        credit_value = _to_float(row[4]) if len(row) > 4 else None
+        if dt_obj and credit_value and credit_value > 0:
+            month_key = dt_obj.strftime("%Y-%m")
+            monthly_totals[month_key] += credit_value
+
+    summary: Dict[str, Any] = {}
+    if monthly_totals:
+        avg_income = sum(monthly_totals.values()) / len(monthly_totals)
+        summary["average_monthly_income_mnt"] = round(avg_income, 2)
+
+    period = _resolve_statement_period(parser_output, documents, first_date, last_date)
+    if period:
+        summary["statement_period"] = period
+
+    return summary or None
+
+
+def _resolve_statement_period(
+    parser_output: Dict[str, Any],
+    documents: Dict[str, Any],
+    first_date: Optional[datetime],
+    last_date: Optional[datetime],
+) -> Optional[str]:
+    stats = parser_output.get("stats") or {}
+    start = _parse_timestamp(stats.get("period_from")) if stats.get("period_from") else None
+    end = _parse_timestamp(stats.get("period_to")) if stats.get("period_to") else None
+
+    period_doc = documents.get("bank_statement_period") if isinstance(documents, dict) else None
+    if isinstance(period_doc, dict):
+        start = start or _parse_timestamp(period_doc.get("from") or period_doc.get("from_"))
+        end = end or _parse_timestamp(period_doc.get("to"))
+
+    start = start or first_date
+    end = end or last_date
+
+    if start and end:
+        return f"{start.strftime('%Y-%m')} to {end.strftime('%Y-%m')}"
+    return None
+
+
+def _parse_timestamp(value: Any) -> Optional[datetime]:
+    if not value or isinstance(value, (int, float)):
+        return None
+    if isinstance(value, datetime):
+        return value
+    text = str(value).strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    for fmt in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text[: len(fmt)], fmt)
+        except ValueError:
+            continue
     try:
-        float(value)
-        return True
-    except (TypeError, ValueError):
-        return False
+        return datetime.fromisoformat(text)
+    except ValueError:
+        return None
+
+
+def _to_float(value: Any) -> Optional[float]:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    try:
+        normalized = str(value).replace(",", "").strip()
+        return float(normalized) if normalized else None
+    except ValueError:
+        return None

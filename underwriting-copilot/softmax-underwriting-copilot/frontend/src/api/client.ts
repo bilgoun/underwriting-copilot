@@ -96,7 +96,8 @@ export const dashboardApi = {
 
   // Auth
   async login(clientId: string, clientSecret: string, scope: string) {
-    const { data } = await apiClient.post('/oauth/token', {
+    // OAuth endpoint is at /oauth/token, not /v1/oauth/token
+    const { data } = await axios.post('/oauth/token', {
       grant_type: 'client_credentials',
       client_id: clientId,
       client_secret: clientSecret,

@@ -1,0 +1,27 @@
+groups:
+  - name: underwriting-alerts
+    rules:
+      - alert: HighHttpErrorRate
+        expr: sum(rate(http_request_errors_total[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP error rate >5%"
+          description: "More than 5% of requests in the last 5 minutes returned 5xx errors."
+      - alert: QueueBacklogGrowing
+        expr: sum(queue_backlog) > 25
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Underwriting queue backlog"
+          description: "Celery underwriting queue has more than 25 pending jobs for over 10 minutes."
+      - alert: LlmLatencyHigh
+        expr: histogram_quantile(0.95, sum(rate(underwriting_llm_duration_seconds_bucket[10m])) by (le)) > 30
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "LLM response latency high"
+          description: "p95 LLM generation latency has exceeded 30 seconds for the last 10 minutes."

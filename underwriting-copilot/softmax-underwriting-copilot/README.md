@@ -77,7 +77,7 @@ OpenAPI 3.1 specification: `app/openapi.yaml`.
 1. Download statement PDF (validated by `app/utils/pdf.py`).
 2. Parse using `app/pipeline/parser_adapter.py` wrapping bank_parser module (to be provided separately).
 3. Call collateral valuation (sandbox stub or real HTTP call) from `app/pipeline/collateral.py`.
-4. Fuse Mongolian feature JSON (`app/pipeline/fuse.py`) and evaluate guardrail rules (`app/pipeline/rules.py`).
+4. Fuse Mongolian feature JSON prior to LLM invocation (`app/pipeline/fuse.py`).
 5. Generate memo via LLM (`app/pipeline/llm.py`—sandbox stub by default).
 6. Persist encrypted payloads/results and emit signed webhook via `app/utils/webhooks.py`.
 
@@ -145,4 +145,3 @@ infra/              systemd units and Azure cloud-init
 tests/              Unit & integration tests with fixtures
 Dockerfile.*        Container builds for API and worker
 ```
-
