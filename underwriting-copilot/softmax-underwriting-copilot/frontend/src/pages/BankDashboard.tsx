@@ -283,6 +283,31 @@ const detailRowValueStyle: CSSProperties = {
   fontWeight: 600,
 }
 
+const tabContainerStyle: CSSProperties = {
+  display: 'flex',
+  gap: '0.5rem',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+  padding: '0 2rem',
+  marginBottom: '1.5rem',
+}
+
+const getTabStyle = (isActive: boolean): CSSProperties => ({
+  padding: '1rem 1.5rem',
+  background: 'transparent',
+  border: 'none',
+  borderBottom: isActive ? `2px solid ${accentBlue}` : '2px solid transparent',
+  color: isActive ? accentBlue : 'rgba(0, 0, 0, 0.6)',
+  fontWeight: isActive ? 600 : 500,
+  fontSize: '0.95rem',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  marginBottom: '-1px',
+})
+
+const tabContentStyle: CSSProperties = {
+  padding: '0 2rem 2rem 2rem',
+}
+
 const statusPalette: Record<string, { base: string; text: string }> = {
   succeeded: { base: '#34c759', text: '#0b5d1e' },
   failed: { base: '#ff375f', text: '#991b1b' },
@@ -293,6 +318,7 @@ const statusPalette: Record<string, { base: string; text: string }> = {
 export default function BankDashboard() {
   const [selectedJob, setSelectedJob] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('')
+  const [activeTab, setActiveTab] = useState<'raw_input' | 'llm_output'>('raw_input')
   const navigate = useNavigate()
   const { logout } = useAuth()
 
@@ -500,6 +526,7 @@ export default function BankDashboard() {
               </div>
 
               <div style={{ ...jobsScrollAreaStyle, padding: 0 }}>
+                {/* Summary Section - Always visible */}
                 <Section title="Summary">
                   <DetailRow label="Job ID" value={jobDetail.summary.job_id} />
                   <DetailRow label="Client Job ID" value={jobDetail.summary.client_job_id} />
@@ -523,44 +550,36 @@ export default function BankDashboard() {
                   />
                 </Section>
 
-                {jobDetail.raw_input && (
-                  <Section title="Raw Input">
+                {/* Tab Navigation */}
+                <div style={tabContainerStyle}>
+                  <button
+                    style={getTabStyle(activeTab === 'raw_input')}
+                    onClick={() => setActiveTab('raw_input')}
+                  >
+                    Raw Input
+                  </button>
+                  <button
+                    style={getTabStyle(activeTab === 'llm_output')}
+                    onClick={() => setActiveTab('llm_output')}
+                  >
+                    LLM Output
+                  </button>
+                </div>
+
+                {/* Tab Content */}
+                <div style={tabContentStyle}>
+                  {activeTab === 'raw_input' && jobDetail.raw_input && (
                     <pre style={codeBlockStyle}>
                       {JSON.stringify(jobDetail.raw_input, null, 2)}
                     </pre>
-                  </Section>
-                )}
+                  )}
 
-                {jobDetail.llm_output_markdown && (
-                  <Section title="LLM Output">
+                  {activeTab === 'llm_output' && jobDetail.llm_output_markdown && (
                     <div style={llmOutputShellStyle}>
                       <MarkdownRenderer markdown={jobDetail.llm_output_markdown} />
                     </div>
-                  </Section>
-                )}
-
-                {jobDetail.llm_output_metadata && (
-                  <Section title="Output Metadata">
-                    <pre style={codeBlockStyle}>
-                      {JSON.stringify(jobDetail.llm_output_metadata, null, 2)}
-                    </pre>
-                  </Section>
-                )}
-
-                {jobDetail.audits.length > 0 && (
-                  <Section title="Audit Trail">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {jobDetail.audits.map((audit) => (
-                        <div key={audit.id} style={auditCardStyle}>
-                          <div style={{ fontWeight: 600, color: '#1b2337' }}>{audit.action}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#6b7285' }}>
-                            by {audit.actor} at {new Date(audit.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Section>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           )}

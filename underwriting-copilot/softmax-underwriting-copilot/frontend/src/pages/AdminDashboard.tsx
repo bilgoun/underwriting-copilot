@@ -258,6 +258,31 @@ const llmOutputShellStyle: CSSProperties = {
   boxShadow: '0 4px 12px rgba(52, 199, 89, 0.08)',
 }
 
+const tabContainerStyle: CSSProperties = {
+  display: 'flex',
+  gap: '0.5rem',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+  padding: '0 2rem',
+  marginBottom: '1.5rem',
+}
+
+const getTabStyle = (isActive: boolean): CSSProperties => ({
+  padding: '1rem 1.5rem',
+  background: 'transparent',
+  border: 'none',
+  borderBottom: isActive ? `2px solid ${accentBlue}` : '2px solid transparent',
+  color: isActive ? accentBlue : 'rgba(0, 0, 0, 0.6)',
+  fontWeight: isActive ? 600 : 500,
+  fontSize: '0.95rem',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  marginBottom: '-1px',
+})
+
+const tabContentStyle: CSSProperties = {
+  padding: '0 2rem 2rem 2rem',
+}
+
 const statusPalette: Record<string, { base: string; text: string }> = {
   succeeded: { base: '#34c759', text: '#0b5d1e' },
   failed: { base: '#ff375f', text: '#991b1b' },
@@ -347,6 +372,7 @@ const columnTitleStyle: CSSProperties = {
 export default function AdminDashboard() {
   const [selectedTenant, setSelectedTenant] = useState<string>('')
   const [selectedJob, setSelectedJob] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<'raw_input' | 'llm_input' | 'llm_output'>('raw_input')
   const navigate = useNavigate()
   const { logout } = useAuth()
 
@@ -634,33 +660,47 @@ export default function AdminDashboard() {
             </div>
 
             <div style={modalBodyStyle}>
-              {/* Three Column Grid */}
-              <div style={threeColumnGridStyle}>
-                {/* Raw Input Column */}
-                <div style={columnStyle}>
-                  <div style={columnTitleStyle}>Raw Input</div>
+              {/* Tab Navigation */}
+              <div style={tabContainerStyle}>
+                <button
+                  style={getTabStyle(activeTab === 'raw_input')}
+                  onClick={() => setActiveTab('raw_input')}
+                >
+                  Raw Input
+                </button>
+                <button
+                  style={getTabStyle(activeTab === 'llm_input')}
+                  onClick={() => setActiveTab('llm_input')}
+                >
+                  LLM Input
+                </button>
+                <button
+                  style={getTabStyle(activeTab === 'llm_output')}
+                  onClick={() => setActiveTab('llm_output')}
+                >
+                  LLM Output
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <div style={tabContentStyle}>
+                {activeTab === 'raw_input' && (
                   <pre style={codeBlockStyle}>
                     {JSON.stringify(jobDetail.raw_input, null, 2)}
                   </pre>
-                </div>
+                )}
 
-                {/* LLM Input Column */}
-                <div style={columnStyle}>
-                  <div style={columnTitleStyle}>LLM Input</div>
+                {activeTab === 'llm_input' && (
                   <pre style={accentCodeBlockStyle}>
                     {JSON.stringify(jobDetail.llm_input, null, 2)}
                   </pre>
-                </div>
+                )}
 
-                {/* LLM Output Column */}
-                <div style={columnStyle}>
-                  <div style={columnTitleStyle}>LLM Output</div>
-                  {jobDetail.llm_output_markdown && (
-                    <div style={llmOutputShellStyle}>
-                      <MarkdownRenderer markdown={jobDetail.llm_output_markdown} />
-                    </div>
-                  )}
-                </div>
+                {activeTab === 'llm_output' && jobDetail.llm_output_markdown && (
+                  <div style={llmOutputShellStyle}>
+                    <MarkdownRenderer markdown={jobDetail.llm_output_markdown} />
+                  </div>
+                )}
               </div>
             </div>
           </div>
