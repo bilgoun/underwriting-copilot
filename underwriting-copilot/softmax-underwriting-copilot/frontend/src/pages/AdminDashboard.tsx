@@ -7,20 +7,21 @@ import { Activity, LogOut, Users, AlertTriangle } from 'lucide-react'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 
 const accentBlue = '#0a84ff'
-const backgroundGradient = 'linear-gradient(135deg, #eef2ff 0%, #f9fbff 45%, #f5f7ff 100%)'
+const backgroundGradient = 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 50%, #f0f4f8 100%)'
 
 const glassSurface: CSSProperties = {
-  background: 'rgba(255, 255, 255, 0.78)',
-  borderRadius: '28px',
-  border: '1px solid rgba(255, 255, 255, 0.45)',
-  boxShadow: '0 30px 60px rgba(15, 23, 42, 0.12)',
-  backdropFilter: 'blur(22px)',
+  background: 'rgba(255, 255, 255, 0.95)',
+  borderRadius: '24px',
+  border: '1px solid rgba(0, 0, 0, 0.06)',
+  boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.04) inset',
+  backdropFilter: 'blur(40px) saturate(180%)',
 }
 
 const pageStyle: CSSProperties = {
   minHeight: '100vh',
   background: backgroundGradient,
   padding: '3rem 0 3.5rem',
+  position: 'relative',
 }
 
 const shellStyle: CSSProperties = {
@@ -62,14 +63,14 @@ const headerTitleStyle: CSSProperties = {
   fontSize: '2.4rem',
   fontWeight: 700,
   letterSpacing: '-0.03em',
-  color: '#0b1120',
+  color: 'rgba(0, 0, 0, 0.9)',
 }
 
 const headerSubtitleStyle: CSSProperties = {
   margin: 0,
   fontSize: '1rem',
   lineHeight: 1.6,
-  color: 'rgba(11, 17, 32, 0.62)',
+  color: 'rgba(0, 0, 0, 0.5)',
   maxWidth: '28rem',
 }
 
@@ -99,7 +100,7 @@ const sectionHeadingStyle: CSSProperties = {
   margin: 0,
   fontSize: '1.4rem',
   fontWeight: 600,
-  color: '#101828',
+  color: 'rgba(0, 0, 0, 0.9)',
   letterSpacing: '-0.01em',
 }
 
@@ -107,7 +108,7 @@ const sectionSubtitleStyle: CSSProperties = {
   margin: 0,
   fontSize: '0.95rem',
   lineHeight: 1.5,
-  color: '#6d7289',
+  color: 'rgba(0, 0, 0, 0.5)',
 }
 
 const selectionBadgeStyle: CSSProperties = {
@@ -148,19 +149,19 @@ const tableHeaderStyle: CSSProperties = {
   fontWeight: 700,
   letterSpacing: '0.12em',
   textTransform: 'uppercase',
-  color: 'rgba(11, 17, 32, 0.45)',
+  color: 'rgba(0, 0, 0, 0.5)',
 }
 
 const tableCellStyle: CSSProperties = {
   padding: '1rem 1.3rem',
   fontSize: '0.95rem',
-  color: '#1b2337',
+  color: 'rgba(0, 0, 0, 0.85)',
   fontWeight: 500,
 }
 
 const emptyStateStyle: CSSProperties = {
   fontSize: '0.95rem',
-  color: '#8a93ab',
+  color: 'rgba(0, 0, 0, 0.4)',
   textAlign: 'center',
 }
 
@@ -173,7 +174,7 @@ const jobColumnsBaseStyle: CSSProperties = {
 
 const jobListHeaderStyle: CSSProperties = {
   padding: '1.8rem 2.25rem 1.2rem',
-  borderBottom: '1px solid rgba(15, 23, 42, 0.06)',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
 }
 
 const jobsScrollAreaStyle: CSSProperties = {
@@ -188,35 +189,35 @@ const jobsScrollAreaStyle: CSSProperties = {
 }
 
 const jobCardBaseStyle: CSSProperties = {
-  borderRadius: '20px',
-  border: '1px solid rgba(15, 23, 42, 0.08)',
-  background: 'rgba(255, 255, 255, 0.72)',
-  boxShadow: '0 18px 36px rgba(15, 23, 42, 0.1)',
+  borderRadius: '16px',
+  border: '1px solid rgba(0, 0, 0, 0.1)',
+  background: 'rgba(255, 255, 255, 0.7)',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
   padding: '1.2rem 1.5rem',
   display: 'flex',
   flexDirection: 'column',
   gap: '0.75rem',
   cursor: 'pointer',
-  transition: 'transform 0.2s ease, box-shadow 0.3s ease, background 0.3s ease',
+  transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, background 0.3s ease, border 0.3s ease',
 }
 
 const jobCardSelectedStyle: CSSProperties = {
-  background: 'rgba(10, 132, 255, 0.16)',
-  border: `1px solid ${hexToRgba(accentBlue, 0.35)}`,
-  boxShadow: `0 24px 40px ${hexToRgba(accentBlue, 0.25)}`,
-  transform: 'translateY(-4px)',
+  background: 'rgba(10, 132, 255, 0.08)',
+  border: `1px solid ${hexToRgba(accentBlue, 0.3)}`,
+  boxShadow: `0 8px 24px ${hexToRgba(accentBlue, 0.2)}`,
+  transform: 'translateY(-2px)',
 }
 
 const jobTitleStyle: CSSProperties = {
   fontSize: '1.05rem',
   fontWeight: 700,
   letterSpacing: '-0.01em',
-  color: '#0f172a',
+  color: 'rgba(0, 0, 0, 0.9)',
 }
 
 const jobSubtitleStyle: CSSProperties = {
   fontSize: '0.85rem',
-  color: '#6d7289',
+  color: 'rgba(0, 0, 0, 0.5)',
 }
 
 const jobMetaStyle: CSSProperties = {
@@ -224,12 +225,12 @@ const jobMetaStyle: CSSProperties = {
   flexWrap: 'wrap',
   gap: '0.85rem',
   fontSize: '0.82rem',
-  color: '#4d576a',
+  color: 'rgba(0, 0, 0, 0.6)',
 }
 
 const jobTimestampStyle: CSSProperties = {
   fontSize: '0.78rem',
-  color: '#94a0b8',
+  color: 'rgba(0, 0, 0, 0.45)',
 }
 
 const closeButtonStyle: CSSProperties = {
@@ -237,52 +238,53 @@ const closeButtonStyle: CSSProperties = {
   alignItems: 'center',
   padding: '0.45rem 0.9rem',
   borderRadius: '9999px',
-  border: '1px solid rgba(15, 23, 42, 0.08)',
-  background: 'rgba(15, 23, 42, 0.05)',
-  color: '#4a5565',
+  border: '1px solid rgba(0, 0, 0, 0.15)',
+  background: 'rgba(0, 0, 0, 0.04)',
+  color: 'rgba(0, 0, 0, 0.7)',
   fontSize: '0.85rem',
   fontWeight: 600,
   cursor: 'pointer',
+  transition: 'all 0.2s ease',
 }
 
 const codeBlockStyle: CSSProperties = {
   padding: '1.25rem',
-  borderRadius: '18px',
-  background: 'rgba(15, 23, 42, 0.05)',
-  border: '1px solid rgba(15, 23, 42, 0.08)',
+  borderRadius: '12px',
+  background: 'rgba(0, 0, 0, 0.04)',
+  border: '1px solid rgba(0, 0, 0, 0.1)',
   fontSize: '0.8rem',
   overflow: 'auto',
-  color: '#1b2337',
+  color: 'rgba(0, 0, 0, 0.85)',
   fontFamily: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
 }
 
 const accentCodeBlockStyle: CSSProperties = {
   ...codeBlockStyle,
-  background: 'linear-gradient(135deg, rgba(255, 159, 10, 0.16), rgba(255, 204, 64, 0.18))',
-  border: '1px solid rgba(255, 159, 10, 0.28)',
+  background: 'rgba(255, 159, 10, 0.06)',
+  border: '1px solid rgba(255, 159, 10, 0.2)',
 }
 
 const llmOutputShellStyle: CSSProperties = {
   padding: '1.25rem',
-  borderRadius: '20px',
-  background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.16), rgba(52, 199, 89, 0.28))',
-  border: '1px solid rgba(52, 199, 89, 0.3)',
-  boxShadow: '0 18px 38px rgba(52, 199, 89, 0.18)',
+  borderRadius: '16px',
+  background: 'rgba(52, 199, 89, 0.06)',
+  border: '1px solid rgba(52, 199, 89, 0.2)',
+  boxShadow: '0 4px 12px rgba(52, 199, 89, 0.08)',
 }
 
 const auditCardStyle: CSSProperties = {
   padding: '0.85rem 1rem',
-  borderRadius: '16px',
-  background: 'rgba(255, 255, 255, 0.82)',
-  border: '1px solid rgba(15, 23, 42, 0.06)',
-  boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)',
+  borderRadius: '12px',
+  background: 'rgba(0, 0, 0, 0.02)',
+  border: '1px solid rgba(0, 0, 0, 0.08)',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
 }
 
 const sectionTitleStyle: CSSProperties = {
   margin: 0,
   fontSize: '1rem',
   fontWeight: 600,
-  color: '#1b2337',
+  color: 'rgba(0, 0, 0, 0.85)',
 }
 
 const detailRowStyle: CSSProperties = {
@@ -292,23 +294,102 @@ const detailRowStyle: CSSProperties = {
   gap: '1rem',
   padding: '0.65rem 0',
   fontSize: '0.95rem',
-  borderBottom: '1px solid rgba(15, 23, 42, 0.06)',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
 }
 
 const detailRowLabelStyle: CSSProperties = {
-  color: '#6d7289',
+  color: 'rgba(0, 0, 0, 0.5)',
 }
 
 const detailRowValueStyle: CSSProperties = {
-  color: '#111b2e',
+  color: 'rgba(0, 0, 0, 0.85)',
   fontWeight: 600,
 }
 
 const statusPalette: Record<string, { base: string; text: string }> = {
-  succeeded: { base: '#34c759', text: '#0b3d17' },
-  failed: { base: '#ff375f', text: '#671226' },
-  pending: { base: '#ff9f0a', text: '#6c3a00' },
-  default: { base: '#8e8e93', text: '#1f2937' },
+  succeeded: { base: '#34c759', text: '#0b5d1e' },
+  failed: { base: '#ff375f', text: '#991b1b' },
+  pending: { base: '#ff9f0a', text: '#78350f' },
+  default: { base: '#8e8e93', text: '#374151' },
+}
+
+const modalOverlayStyle: CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: 'rgba(0, 0, 0, 0.5)',
+  backdropFilter: 'blur(8px)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 1000,
+  padding: '2rem',
+}
+
+const modalContentStyle: CSSProperties = {
+  background: 'rgba(255, 255, 255, 0.98)',
+  borderRadius: '24px',
+  border: '1px solid rgba(0, 0, 0, 0.1)',
+  boxShadow: '0 30px 80px rgba(0, 0, 0, 0.25)',
+  maxWidth: '1400px',
+  width: '100%',
+  maxHeight: '90vh',
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+}
+
+const modalHeaderStyle: CSSProperties = {
+  padding: '1.5rem 2rem',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+}
+
+const modalBodyStyle: CSSProperties = {
+  padding: '2rem',
+  overflowY: 'auto',
+  flex: 1,
+}
+
+const modalCloseButtonStyle: CSSProperties = {
+  width: '32px',
+  height: '32px',
+  borderRadius: '50%',
+  border: '1px solid rgba(0, 0, 0, 0.15)',
+  background: 'rgba(0, 0, 0, 0.04)',
+  color: 'rgba(0, 0, 0, 0.7)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  fontSize: '1.25rem',
+  fontWeight: 400,
+}
+
+const threeColumnGridStyle: CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(3, 1fr)',
+  gap: '1.5rem',
+  marginBottom: '2rem',
+}
+
+const columnStyle: CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0.75rem',
+}
+
+const columnTitleStyle: CSSProperties = {
+  fontSize: '0.9rem',
+  fontWeight: 600,
+  color: 'rgba(0, 0, 0, 0.7)',
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
 }
 
 export default function AdminDashboard() {
@@ -511,14 +592,7 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <section
-          style={{
-            ...jobColumnsBaseStyle,
-            gridTemplateColumns: selectedJob
-              ? 'minmax(0, 1fr) minmax(0, 1fr)'
-              : 'minmax(0, 1fr)',
-          }}
-        >
+        <section style={jobColumnsBaseStyle}>
           <div
             style={{
               ...glassSurface,
@@ -593,109 +667,53 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+        </section>
+      </div>
 
-          {selectedJob && jobDetail && (
-            <div
-              style={{
-                ...glassSurface,
-                padding: '2rem 2.25rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '1.75rem',
-                minHeight: 0,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  flexWrap: 'wrap',
-                }}
-              >
-                <h2 style={sectionHeadingStyle}>Job details</h2>
-                <button onClick={() => setSelectedJob(null)} style={closeButtonStyle}>
-                  Close
-                </button>
-              </div>
+      {/* Modal Dialog */}
+      {selectedJob && jobDetail && (
+        <div style={modalOverlayStyle} onClick={() => setSelectedJob(null)}>
+          <div style={modalContentStyle} onClick={(e) => e.stopPropagation()}>
+            <div style={modalHeaderStyle}>
+              <h2 style={sectionHeadingStyle}>Job Details</h2>
+              <button onClick={() => setSelectedJob(null)} style={modalCloseButtonStyle}>
+                ×
+              </button>
+            </div>
 
-              <div style={{ ...jobsScrollAreaStyle, padding: 0 }}>
-                <Section title="Summary">
-                  <DetailRow label="Job ID" value={jobDetail.summary.job_id} />
-                  <DetailRow label="Tenant ID" value={jobDetail.summary.tenant_id} />
-                  <DetailRow label="Client Job ID" value={jobDetail.summary.client_job_id} />
-                  <DetailRow label="Status" value={jobDetail.summary.status} />
-                  <DetailRow label="Decision" value={jobDetail.summary.decision || 'N/A'} />
-                  {jobDetail.summary.risk_score !== null && (
-                    <DetailRow
-                      label="Risk Score"
-                      value={jobDetail.summary.risk_score.toFixed(3)}
-                    />
-                  )}
-                  {jobDetail.summary.processing_seconds !== null && (
-                    <DetailRow
-                      label="Processing Time"
-                      value={`${jobDetail.summary.processing_seconds.toFixed(2)}s`}
-                    />
-                  )}
-                  <DetailRow
-                    label="Created"
-                    value={new Date(jobDetail.summary.created_at).toLocaleString()}
-                  />
-                </Section>
+            <div style={modalBodyStyle}>
+              {/* Three Column Grid */}
+              <div style={threeColumnGridStyle}>
+                {/* Raw Input Column */}
+                <div style={columnStyle}>
+                  <div style={columnTitleStyle}>Raw Input</div>
+                  <pre style={codeBlockStyle}>
+                    {JSON.stringify(jobDetail.raw_input, null, 2)}
+                  </pre>
+                </div>
 
-                {jobDetail.raw_input && (
-                  <Section title="Raw Input (Bank Submitted)">
-                    <pre style={codeBlockStyle}>
-                      {JSON.stringify(jobDetail.raw_input, null, 2)}
-                    </pre>
-                  </Section>
-                )}
+                {/* LLM Input Column */}
+                <div style={columnStyle}>
+                  <div style={columnTitleStyle}>LLM Input</div>
+                  <pre style={accentCodeBlockStyle}>
+                    {JSON.stringify(jobDetail.llm_input, null, 2)}
+                  </pre>
+                </div>
 
-                {jobDetail.llm_input && (
-                  <Section title="LLM Input (Features)">
-                    <pre style={accentCodeBlockStyle}>
-                      {JSON.stringify(jobDetail.llm_input, null, 2)}
-                    </pre>
-                  </Section>
-                )}
-
-                {jobDetail.llm_output_markdown && (
-                  <Section title="LLM Output (Credit Memo)">
+                {/* LLM Output Column */}
+                <div style={columnStyle}>
+                  <div style={columnTitleStyle}>LLM Output</div>
+                  {jobDetail.llm_output_markdown && (
                     <div style={llmOutputShellStyle}>
                       <MarkdownRenderer markdown={jobDetail.llm_output_markdown} />
                     </div>
-                  </Section>
-                )}
-
-                {jobDetail.llm_output_metadata && (
-                  <Section title="Output Metadata">
-                    <pre style={codeBlockStyle}>
-                      {JSON.stringify(jobDetail.llm_output_metadata, null, 2)}
-                    </pre>
-                  </Section>
-                )}
-
-                {jobDetail.audits.length > 0 && (
-                  <Section title="Audit Trail">
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      {jobDetail.audits.map((audit) => (
-                        <div key={audit.id} style={auditCardStyle}>
-                          <div style={{ fontWeight: 600, color: '#1b2337' }}>{audit.action}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#6b7285' }}>
-                            by {audit.actor} at {new Date(audit.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Section>
-                )}
+                  )}
+                </div>
               </div>
             </div>
-          )}
-        </section>
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -804,13 +822,13 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 
 function getTenantRowStyle(isSelected: boolean): CSSProperties {
   return {
-    background: isSelected ? hexToRgba(accentBlue, 0.16) : 'rgba(255, 255, 255, 0.72)',
-    border: `1px solid ${isSelected ? hexToRgba(accentBlue, 0.35) : 'rgba(255, 255, 255, 0.45)'}`,
+    background: isSelected ? hexToRgba(accentBlue, 0.1) : 'rgba(0, 0, 0, 0.04)',
+    border: `1px solid ${isSelected ? hexToRgba(accentBlue, 0.3) : 'rgba(0, 0, 0, 0.08)'}`,
     boxShadow: isSelected
-      ? `0 22px 44px ${hexToRgba(accentBlue, 0.22)}`
-      : '0 20px 40px rgba(15, 23, 42, 0.1)',
-    transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
-    transition: 'all 0.3s ease',
+      ? `0 8px 24px ${hexToRgba(accentBlue, 0.25)}`
+      : '0 4px 12px rgba(0, 0, 0, 0.2)',
+    transform: isSelected ? 'translateY(-1px)' : 'translateY(0)',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 }
 
@@ -822,16 +840,16 @@ function getTenantActionStyle(isActive: boolean): CSSProperties {
     padding: '0.5rem 0.95rem',
     borderRadius: '9999px',
     background: isActive
-      ? `linear-gradient(135deg, ${hexToRgba(accentBlue, 0.2)}, ${hexToRgba(accentBlue, 0.35)})`
-      : 'rgba(15, 23, 42, 0.05)',
+      ? `linear-gradient(135deg, ${hexToRgba(accentBlue, 0.15)}, ${hexToRgba(accentBlue, 0.25)})`
+      : 'rgba(0, 0, 0, 0.05)',
     border: isActive
-      ? `1px solid ${hexToRgba(accentBlue, 0.45)}`
-      : '1px solid rgba(15, 23, 42, 0.08)',
-    color: isActive ? accentBlue : '#4a5568',
+      ? `1px solid ${hexToRgba(accentBlue, 0.4)}`
+      : '1px solid rgba(0, 0, 0, 0.1)',
+    color: isActive ? accentBlue : 'rgba(0, 0, 0, 0.7)',
     fontSize: '0.85rem',
     fontWeight: 600,
     cursor: 'pointer',
-    transition: 'all 0.25s ease',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   }
 }
 

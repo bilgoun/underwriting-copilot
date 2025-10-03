@@ -7,20 +7,21 @@ import { Clock, CheckCircle, Activity, LogOut, TrendingUp } from 'lucide-react'
 import MarkdownRenderer from '../components/MarkdownRenderer'
 
 const accentBlue = '#0a84ff'
-const backgroundGradient = 'linear-gradient(135deg, #eef2ff 0%, #f9fbff 45%, #f5f7ff 100%)'
+const backgroundGradient = 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 50%, #f0f4f8 100%)'
 
 const glassSurface: CSSProperties = {
-  background: 'rgba(255, 255, 255, 0.78)',
-  borderRadius: '28px',
-  border: '1px solid rgba(255, 255, 255, 0.45)',
-  boxShadow: '0 30px 60px rgba(15, 23, 42, 0.12)',
-  backdropFilter: 'blur(22px)',
+  background: 'rgba(255, 255, 255, 0.95)',
+  borderRadius: '24px',
+  border: '1px solid rgba(0, 0, 0, 0.06)',
+  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0, 0, 0, 0.04) inset',
+  backdropFilter: 'blur(40px) saturate(180%)',
 }
 
 const pageStyle: CSSProperties = {
   minHeight: '100vh',
   background: backgroundGradient,
   padding: '3rem 0 3.5rem',
+  position: 'relative',
 }
 
 const shellStyle: CSSProperties = {
@@ -62,14 +63,17 @@ const headerTitleStyle: CSSProperties = {
   fontSize: '2.4rem',
   fontWeight: 700,
   letterSpacing: '-0.03em',
-  color: '#0b1120',
+  background: 'linear-gradient(135deg, #1a1a1a 0%, #4a4a4a 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
 }
 
 const headerSubtitleStyle: CSSProperties = {
   margin: 0,
   fontSize: '1rem',
   lineHeight: 1.6,
-  color: 'rgba(11, 17, 32, 0.62)',
+  color: 'rgba(0, 0, 0, 0.5)',
   maxWidth: '28rem',
 }
 
@@ -99,7 +103,7 @@ const sectionHeadingStyle: CSSProperties = {
   margin: 0,
   fontSize: '1.4rem',
   fontWeight: 600,
-  color: '#101828',
+  color: 'rgba(0, 0, 0, 0.95)',
   letterSpacing: '-0.01em',
 }
 
@@ -107,7 +111,7 @@ const sectionSubtitleStyle: CSSProperties = {
   margin: 0,
   fontSize: '0.95rem',
   lineHeight: 1.5,
-  color: '#6d7289',
+  color: 'rgba(0, 0, 0, 0.5)',
 }
 
 const filterGroupStyle: CSSProperties = {
@@ -120,26 +124,26 @@ const filterGroupStyle: CSSProperties = {
 const filterLabelStyle: CSSProperties = {
   fontSize: '0.85rem',
   fontWeight: 600,
-  color: '#6d7289',
+  color: 'rgba(0, 0, 0, 0.6)',
 }
 
 const filterSelectStyle: CSSProperties = {
   padding: '0.5rem 1rem',
-  borderRadius: '14px',
-  border: `1px solid ${hexToRgba(accentBlue, 0.25)}`,
-  background: 'rgba(255, 255, 255, 0.75)',
-  color: '#111b2e',
+  borderRadius: '12px',
+  border: `1px solid rgba(0, 0, 0, 0.15)`,
+  background: 'rgba(0, 0, 0, 0.05)',
+  color: 'rgba(0, 0, 0, 0.9)',
   fontSize: '0.85rem',
   fontWeight: 600,
   cursor: 'pointer',
-  boxShadow: '0 12px 22px rgba(15, 23, 42, 0.08)',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
   WebkitAppearance: 'none',
   appearance: 'none',
 }
 
 const emptyStateStyle: CSSProperties = {
   fontSize: '0.95rem',
-  color: '#8a93ab',
+  color: 'rgba(0, 0, 0, 0.4)',
   textAlign: 'center',
 }
 
@@ -152,7 +156,7 @@ const jobColumnsBaseStyle: CSSProperties = {
 
 const jobListHeaderStyle: CSSProperties = {
   padding: '1.8rem 2.25rem 1.2rem',
-  borderBottom: '1px solid rgba(15, 23, 42, 0.06)',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
 }
 
 const jobsScrollAreaStyle: CSSProperties = {
@@ -167,35 +171,35 @@ const jobsScrollAreaStyle: CSSProperties = {
 }
 
 const jobCardBaseStyle: CSSProperties = {
-  borderRadius: '20px',
-  border: '1px solid rgba(15, 23, 42, 0.08)',
-  background: 'rgba(255, 255, 255, 0.72)',
-  boxShadow: '0 18px 36px rgba(15, 23, 42, 0.1)',
+  borderRadius: '16px',
+  border: '1px solid rgba(0, 0, 0, 0.1)',
+  background: 'rgba(0, 0, 0, 0.04)',
+  boxShadow: '0 8px 16px rgba(0, 0, 0, 0.2)',
   padding: '1.2rem 1.5rem',
   display: 'flex',
   flexDirection: 'column',
   gap: '0.75rem',
   cursor: 'pointer',
-  transition: 'transform 0.2s ease, box-shadow 0.3s ease, background 0.3s ease',
+  transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, background 0.3s ease, border 0.3s ease',
 }
 
 const jobCardSelectedStyle: CSSProperties = {
-  background: 'rgba(10, 132, 255, 0.16)',
-  border: `1px solid ${hexToRgba(accentBlue, 0.35)}`,
-  boxShadow: `0 24px 40px ${hexToRgba(accentBlue, 0.25)}`,
-  transform: 'translateY(-4px)',
+  background: 'rgba(10, 132, 255, 0.1)',
+  border: `1px solid ${hexToRgba(accentBlue, 0.4)}`,
+  boxShadow: `0 12px 32px ${hexToRgba(accentBlue, 0.3)}`,
+  transform: 'translateY(-2px)',
 }
 
 const jobTitleStyle: CSSProperties = {
   fontSize: '1.05rem',
   fontWeight: 700,
   letterSpacing: '-0.01em',
-  color: '#0f172a',
+  color: 'rgba(0, 0, 0, 0.95)',
 }
 
 const jobSubtitleStyle: CSSProperties = {
   fontSize: '0.85rem',
-  color: '#6d7289',
+  color: 'rgba(0, 0, 0, 0.5)',
 }
 
 const jobMetaStyle: CSSProperties = {
@@ -203,12 +207,12 @@ const jobMetaStyle: CSSProperties = {
   flexWrap: 'wrap',
   gap: '0.85rem',
   fontSize: '0.82rem',
-  color: '#4d576a',
+  color: 'rgba(0, 0, 0, 0.6)',
 }
 
 const jobTimestampStyle: CSSProperties = {
   fontSize: '0.78rem',
-  color: '#94a0b8',
+  color: 'rgba(0, 0, 0, 0.4)',
 }
 
 const closeButtonStyle: CSSProperties = {
@@ -216,47 +220,48 @@ const closeButtonStyle: CSSProperties = {
   alignItems: 'center',
   padding: '0.45rem 0.9rem',
   borderRadius: '9999px',
-  border: '1px solid rgba(15, 23, 42, 0.08)',
-  background: 'rgba(15, 23, 42, 0.05)',
-  color: '#4a5565',
+  border: '1px solid rgba(0, 0, 0, 0.15)',
+  background: 'rgba(0, 0, 0, 0.05)',
+  color: 'rgba(0, 0, 0, 0.7)',
   fontSize: '0.85rem',
   fontWeight: 600,
   cursor: 'pointer',
+  transition: 'all 0.2s ease',
 }
 
 const codeBlockStyle: CSSProperties = {
   padding: '1.25rem',
-  borderRadius: '18px',
-  background: 'rgba(15, 23, 42, 0.05)',
-  border: '1px solid rgba(15, 23, 42, 0.08)',
+  borderRadius: '12px',
+  background: 'rgba(0, 0, 0, 0.03)',
+  border: '1px solid rgba(0, 0, 0, 0.1)',
   fontSize: '0.8rem',
   overflow: 'auto',
-  color: '#1b2337',
+  color: 'rgba(0, 0, 0, 0.85)',
   fontFamily: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
 }
 
 
 const llmOutputShellStyle: CSSProperties = {
   padding: '1.25rem',
-  borderRadius: '20px',
-  background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.16), rgba(52, 199, 89, 0.28))',
-  border: '1px solid rgba(52, 199, 89, 0.3)',
-  boxShadow: '0 18px 38px rgba(52, 199, 89, 0.18)',
+  borderRadius: '16px',
+  background: 'rgba(52, 199, 89, 0.08)',
+  border: '1px solid rgba(52, 199, 89, 0.2)',
+  boxShadow: '0 8px 16px rgba(52, 199, 89, 0.1)',
 }
 
 const auditCardStyle: CSSProperties = {
   padding: '0.85rem 1rem',
-  borderRadius: '16px',
-  background: 'rgba(255, 255, 255, 0.82)',
-  border: '1px solid rgba(15, 23, 42, 0.06)',
-  boxShadow: '0 12px 24px rgba(15, 23, 42, 0.08)',
+  borderRadius: '12px',
+  background: 'rgba(0, 0, 0, 0.04)',
+  border: '1px solid rgba(0, 0, 0, 0.08)',
+  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
 }
 
 const sectionTitleStyle: CSSProperties = {
   margin: 0,
   fontSize: '1rem',
   fontWeight: 600,
-  color: '#1b2337',
+  color: 'rgba(0, 0, 0, 0.9)',
 }
 
 const detailRowStyle: CSSProperties = {
@@ -266,23 +271,23 @@ const detailRowStyle: CSSProperties = {
   gap: '1rem',
   padding: '0.65rem 0',
   fontSize: '0.95rem',
-  borderBottom: '1px solid rgba(15, 23, 42, 0.06)',
+  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
 }
 
 const detailRowLabelStyle: CSSProperties = {
-  color: '#6d7289',
+  color: 'rgba(0, 0, 0, 0.5)',
 }
 
 const detailRowValueStyle: CSSProperties = {
-  color: '#111b2e',
+  color: 'rgba(0, 0, 0, 0.9)',
   fontWeight: 600,
 }
 
 const statusPalette: Record<string, { base: string; text: string }> = {
-  succeeded: { base: '#34c759', text: '#0b3d17' },
-  failed: { base: '#ff375f', text: '#671226' },
-  pending: { base: '#ff9f0a', text: '#6c3a00' },
-  default: { base: '#8e8e93', text: '#1f2937' },
+  succeeded: { base: '#34c759', text: '#0b5d1e' },
+  failed: { base: '#ff375f', text: '#991b1b' },
+  pending: { base: '#ff9f0a', text: '#78350f' },
+  default: { base: '#8e8e93', text: '#4b5563' },
 }
 
 export default function BankDashboard() {
