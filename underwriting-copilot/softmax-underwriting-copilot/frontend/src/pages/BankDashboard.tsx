@@ -249,14 +249,6 @@ const llmOutputShellStyle: CSSProperties = {
   boxShadow: '0 8px 16px rgba(52, 199, 89, 0.1)',
 }
 
-const auditCardStyle: CSSProperties = {
-  padding: '0.85rem 1rem',
-  borderRadius: '12px',
-  background: 'rgba(0, 0, 0, 0.04)',
-  border: '1px solid rgba(0, 0, 0, 0.08)',
-  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
-}
-
 const sectionTitleStyle: CSSProperties = {
   margin: 0,
   fontSize: '1rem',

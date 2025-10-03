@@ -348,27 +348,6 @@ const modalCloseButtonStyle: CSSProperties = {
   fontWeight: 400,
 }
 
-const threeColumnGridStyle: CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: '1.5rem',
-  marginBottom: '2rem',
-}
-
-const columnStyle: CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '0.75rem',
-}
-
-const columnTitleStyle: CSSProperties = {
-  fontSize: '0.9rem',
-  fontWeight: 600,
-  color: 'rgba(0, 0, 0, 0.7)',
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-}
-
 export default function AdminDashboard() {
   const [selectedTenant, setSelectedTenant] = useState<string>('')
   const [selectedJob, setSelectedJob] = useState<string | null>(null)
