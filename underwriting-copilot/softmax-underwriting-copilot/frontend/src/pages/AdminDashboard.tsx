@@ -258,32 +258,6 @@ const llmOutputShellStyle: CSSProperties = {
   boxShadow: '0 4px 12px rgba(52, 199, 89, 0.08)',
 }
 
-const sectionTitleStyle: CSSProperties = {
-  margin: 0,
-  fontSize: '1rem',
-  fontWeight: 600,
-  color: 'rgba(0, 0, 0, 0.85)',
-}
-
-const detailRowStyle: CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: '1rem',
-  padding: '0.65rem 0',
-  fontSize: '0.95rem',
-  borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-}
-
-const detailRowLabelStyle: CSSProperties = {
-  color: 'rgba(0, 0, 0, 0.5)',
-}
-
-const detailRowValueStyle: CSSProperties = {
-  color: 'rgba(0, 0, 0, 0.85)',
-  fontWeight: 600,
-}
-
 const statusPalette: Record<string, { base: string; text: string }> = {
   succeeded: { base: '#34c759', text: '#0b5d1e' },
   failed: { base: '#ff375f', text: '#991b1b' },
