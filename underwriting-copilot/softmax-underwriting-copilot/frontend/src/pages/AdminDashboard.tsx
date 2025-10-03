@@ -233,20 +233,6 @@ const jobTimestampStyle: CSSProperties = {
   color: 'rgba(0, 0, 0, 0.45)',
 }
 
-const closeButtonStyle: CSSProperties = {
-  display: 'inline-flex',
-  alignItems: 'center',
-  padding: '0.45rem 0.9rem',
-  borderRadius: '9999px',
-  border: '1px solid rgba(0, 0, 0, 0.15)',
-  background: 'rgba(0, 0, 0, 0.04)',
-  color: 'rgba(0, 0, 0, 0.7)',
-  fontSize: '0.85rem',
-  fontWeight: 600,
-  cursor: 'pointer',
-  transition: 'all 0.2s ease',
-}
-
 const codeBlockStyle: CSSProperties = {
   padding: '1.25rem',
   borderRadius: '12px',
@@ -270,14 +256,6 @@ const llmOutputShellStyle: CSSProperties = {
   background: 'rgba(52, 199, 89, 0.06)',
   border: '1px solid rgba(52, 199, 89, 0.2)',
   boxShadow: '0 4px 12px rgba(52, 199, 89, 0.08)',
-}
-
-const auditCardStyle: CSSProperties = {
-  padding: '0.85rem 1rem',
-  borderRadius: '12px',
-  background: 'rgba(0, 0, 0, 0.02)',
-  border: '1px solid rgba(0, 0, 0, 0.08)',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
 }
 
 const sectionTitleStyle: CSSProperties = {
@@ -799,24 +777,6 @@ function StatusBadge({ status }: { status: string }) {
       />
       {status}
     </span>
-  )
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-      <h3 style={sectionTitleStyle}>{title}</h3>
-      {children}
-    </div>
-  )
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={detailRowStyle}>
-      <span style={detailRowLabelStyle}>{label}</span>
-      <span style={detailRowValueStyle}>{value}</span>
-    </div>
   )
 }
 
