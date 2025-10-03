@@ -235,11 +235,6 @@ const codeBlockStyle: CSSProperties = {
   fontFamily: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
 }
 
-const accentCodeBlockStyle: CSSProperties = {
-  ...codeBlockStyle,
-  background: 'linear-gradient(135deg, rgba(255, 159, 10, 0.16), rgba(255, 204, 64, 0.18))',
-  border: '1px solid rgba(255, 159, 10, 0.28)',
-}
 
 const llmOutputShellStyle: CSSProperties = {
   padding: '1.25rem',
