@@ -5,6 +5,7 @@ import { dashboardApi, JobSummary, DashboardSummary } from '../api/client'
 import { useAuth } from '../utils/auth'
 import { Clock, CheckCircle, Activity, LogOut, TrendingUp } from 'lucide-react'
 import MarkdownRenderer from '../components/MarkdownRenderer'
+import LoanAutomationProduct from '../components/LoanAutomationProduct'
 
 const accentBlue = '#0a84ff'
 const backgroundGradient = 'linear-gradient(135deg, #f5f7fa 0%, #ffffff 50%, #f0f4f8 100%)'
@@ -367,6 +368,8 @@ export default function BankDashboard() {
             <span>Logout</span>
           </button>
         </header>
+
+        <LoanAutomationProduct />
 
         <section>
           <div style={metricsGridStyle}>

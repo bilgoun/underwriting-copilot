@@ -51,6 +51,9 @@ class Settings(BaseSettings):
 
     llm_provider: str = Field(default="sandbox", alias="LLM_PROVIDER")
     llm_api_key: Optional[str] = Field(default=None, alias="LLM_API_KEY")
+    loan_application_url: AnyHttpUrl = Field(
+        default="https://console.softmax.mn/customer-portal", alias="LOAN_APPLICATION_URL"
+    )
 
     collateral_api_url: AnyHttpUrl = Field(default="https://collateral.softmax.mn", alias="SOFTMAX_COLLATERAL_URL")
     collateral_api_key: Optional[str] = Field(default=None, alias="COLLATERAL_API_KEY")

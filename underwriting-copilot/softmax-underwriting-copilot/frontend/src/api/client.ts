@@ -57,6 +57,11 @@ export interface TenantOverview {
   failure_rate_24h: number
 }
 
+export interface ChatMessagePayload {
+  role: 'user' | 'assistant'
+  content: string
+}
+
 export const dashboardApi = {
   // Bank endpoints
   async getTenantJobs(limit = 20, status?: string) {
@@ -103,6 +108,13 @@ export const dashboardApi = {
       client_secret: clientSecret,
       scope,
     })
+    return data
+  },
+}
+
+export const chatApi = {
+  async sendLoanAssistant(messages: ChatMessagePayload[]): Promise<{ reply: string }> {
+    const { data } = await apiClient.post('/chat/loan-assistant', { messages })
     return data
   },
 }

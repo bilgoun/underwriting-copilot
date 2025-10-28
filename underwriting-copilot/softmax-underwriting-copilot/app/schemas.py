@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 from pydantic import ConfigDict
@@ -193,3 +193,16 @@ class TenantOverview(BaseModel):
 
 class AdminTenantOverviewResponse(BaseModel):
     tenants: List[TenantOverview]
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(..., min_length=1, max_length=4000)
+
+
+class LoanChatRequest(BaseModel):
+    messages: List[ChatMessage] = Field(..., min_length=1, max_length=20)
+
+
+class LoanChatResponse(BaseModel):
+    reply: str

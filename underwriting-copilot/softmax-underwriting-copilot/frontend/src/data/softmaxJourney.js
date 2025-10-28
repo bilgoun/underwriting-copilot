@@ -1,0 +1,707 @@
+export const softmaxJourney = {
+  entity: {
+    legalName: 'Софтмакс Ай ХХК',
+    englishName: 'Softmax AI LLC',
+    brn: '5874213',
+    sector: 'Мэдээллийн технологи / хиймэл оюун',
+    foundingDate: '2016-04-12',
+    headquarters: 'Улаанбаатар хот, Сүхбаатар дүүрэг, 1-р хороо, Инновацийн төв 502',
+    relationshipManager: {
+      name: 'Э. Мөнхзул',
+      email: 'rm@softbank.mn',
+      phone: '+976 9911 4455',
+    },
+  },
+  intent: {
+    amount: 1650000000,
+    tenorMonths: 36,
+    purpose: 'capex',
+    narrative:
+      'Softmax AI компани нь үндэсний хэлний LLM дээр суурилсан чатбот болон эрсдэлийн аналитик бүтээгдэхүүнээ бүс нутагт түгээх зорилгоор дата төвийн өргөтгөл, GPU серверийн багц худалдан авах 1.65 тэрбум төгрөгийн эргэлтийн хөрөнгө, хөрөнгө оруулалтын хосолсон санхүүжилт хүсэж байна.',
+  },
+  lead: {
+    leadId: 'lead-softmax-20250127-001',
+    channel: 'chatbot',
+    createdAt: '2025-01-27T09:12:05+08:00',
+    contact: {
+      name: 'Д. Билгүүн',
+      title: 'AI Engineer',
+      phone: '+976 9555-5566',
+      email: 'bilguun@softmax.mn',
+    },
+    productsSuggested: ['term', 'equipment', 'invoice'],
+    chatbotTranscript: [
+      {
+        id: 'msg-1',
+        actor: 'assistant',
+        content:
+          'Сайн байна уу? Softmax AI компанийн санхүүжилтийн зорилго, шаардлагатай хэмжээ, хугацааны талаар мэдээлэл өгнө үү?',
+        timestamp: '2025-01-27T09:11:54+08:00',
+      },
+      {
+        id: 'msg-2',
+        actor: 'user',
+        content:
+          'Бид GPU серверийн өргөтгөл хийх 1.65 тэрбум төгрөгийн санхүүжилт хайж байна. Хугацаа 36 сар, grace 6 сар.',
+        timestamp: '2025-01-27T09:12:05+08:00',
+      },
+      {
+        id: 'msg-3',
+        actor: 'assistant',
+        content:
+          'Баярлалаа. Эргэлтийн + хөрөнгө оруулалтын багц санал болгож байна. 36 сарын хугацаатай тоног төхөөрөмжийн зээл ба POS орлого бүхий эргэлтийн зээлийн багцыг санал болголоо. Илүү дэлгэрэнгүй мэдээллийг порталдаа баталгаажуулна уу.',
+        timestamp: '2025-01-27T09:12:12+08:00',
+      },
+    ],
+  },
+  consents: {
+    consentId: 'consent-softmax-20250127-001',
+    grantedAt: '2025-01-27T09:18:22+08:00',
+    expiresAt: '2025-04-27T09:18:22+08:00',
+    scopes: [
+      {
+        scope: 'zms',
+        label: 'Зээлийн мэдээллийн сан',
+        status: 'granted',
+        proof: '/mock/consent/zms-softmax.pdf',
+      },
+      {
+        scope: 'les',
+        label: 'Хуулийн этгээдийн улсын бүртгэл',
+        status: 'granted',
+        proof: '/mock/consent/les-softmax.pdf',
+      },
+      {
+        scope: 'ndsh',
+        label: 'НДШ шимтгэл',
+        status: 'granted',
+        proof: '/mock/consent/ndsh-softmax.pdf',
+      },
+      {
+        scope: 'tax',
+        label: 'Татварын тайлан / Гааль, ТЕГ',
+        status: 'granted',
+        proof: '/mock/consent/tax-softmax.pdf',
+      },
+      {
+        scope: 'ebarimt',
+        label: 'E-Barimt борлуулалтын мэдээлэл',
+        status: 'granted',
+        proof: '/mock/consent/einvoice-softmax.pdf',
+      },
+      {
+        scope: 'pledge',
+        label: 'Барьцааны бүртгэл',
+        status: 'granted',
+        proof: '/mock/consent/pledge-softmax.pdf',
+      },
+    ],
+  },
+  orchestrator: {
+    accuracyScore: 0.91,
+    completenessScore: 1,
+    currentState: 'RM_HANDOFF',
+    startedAt: '2025-01-27T09:12:05+08:00',
+    completedAt: '2025-01-28T11:45:36+08:00',
+    stateMachine: [
+      { id: 'NEW', label: 'Lead шинэчлэгдэв', reachedAt: '2025-01-27T09:12:05+08:00', status: 'complete' },
+      { id: 'CONSENTED', label: 'Зөвшөөрөл баталгаажсан', reachedAt: '2025-01-27T09:18:22+08:00', status: 'complete' },
+      {
+        id: 'EVIDENCE_COLLECTING',
+        label: 'Мэдээлэл татаж байна',
+        reachedAt: '2025-01-27T09:19:01+08:00',
+        status: 'complete',
+      },
+      { id: 'KYB_OK', label: 'Хуулийн этгээдийн баталгаажуулалт', reachedAt: '2025-01-27T09:23:19+08:00', status: 'complete' },
+      {
+        id: 'POLICY_PREQUAL_OK',
+        label: 'Бодлогын урьдчилсан шалгалт',
+        reachedAt: '2025-01-27T09:28:40+08:00',
+        status: 'complete',
+      },
+      {
+        id: 'PRODUCT_MATCHED',
+        label: 'Бүтээгдэхүүний санал',
+        reachedAt: '2025-01-27T09:29:55+08:00',
+        status: 'complete',
+      },
+      {
+        id: 'CHECKLIST_ASSIGNED',
+        label: 'Динамик баримтын жагсаалт',
+        reachedAt: '2025-01-27T09:30:12+08:00',
+        status: 'complete',
+      },
+      {
+        id: 'DOCS_UPLOADING',
+        label: 'Баримт хүлээн авч байна',
+        reachedAt: '2025-01-27T14:42:03+08:00',
+        status: 'complete',
+      },
+      { id: 'DOCS_COMPLETE', label: 'Баримт бүрэн', reachedAt: '2025-01-28T08:09:44+08:00', status: 'complete' },
+      {
+        id: 'DATA_EXTRACTED',
+        label: 'OCR + авто датa',
+        reachedAt: '2025-01-28T08:14:22+08:00',
+        status: 'complete',
+      },
+      {
+        id: 'CROSSCHECK_OK',
+        label: 'Cross-check давсан',
+        reachedAt: '2025-01-28T11:32:18+08:00',
+        status: 'complete',
+      },
+      { id: 'RM_HANDOFF', label: 'RM-д шилжүүлсэн', reachedAt: '2025-01-28T11:45:36+08:00', status: 'complete' },
+    ],
+    events: [
+      {
+        type: 'lead.created',
+        at: '2025-01-27T09:12:05+08:00',
+        actor: 'chatbot',
+        detail: 'Д. Билгүүн чатботоор дамжуулан зээлийн хүсэлт илгээв.',
+      },
+      {
+        type: 'portal.started',
+        at: '2025-01-27T09:16:44+08:00',
+        actor: 'portal',
+        detail: 'Softmax AI порталд нэвтэрч, зөвшөөрлүүдийг баталгаажуулав.',
+      },
+      {
+        type: 'consent.captured',
+        at: '2025-01-27T09:18:22+08:00',
+        actor: 'consent-vault',
+        detail: 'ЗМС, ТЕГ, НДШ, Пледж бүртгэлийн зөвшөөрөл өгөгдөв.',
+      },
+      {
+        type: 'evidence.collected',
+        at: '2025-01-27T09:22:17+08:00',
+        actor: 'collector.zms',
+        detail: 'ЗМС API-гаар дамжуулан чанаргүй зээлийн мэдээлэл шалгав.',
+        proof: '/mock/proof/zms-softmax.pdf',
+      },
+      {
+        type: 'evidence.collected',
+        at: '2025-01-27T09:23:19+08:00',
+        actor: 'collector.les',
+        detail: 'Хуулийн этгээдийн улсын бүртгэлийн мэдээллийг шөнийн mirror-оос татав.',
+      },
+      {
+        type: 'policy.prequal.pass',
+        at: '2025-01-27T09:28:40+08:00',
+        actor: 'rules-engine',
+        detail: 'Бодлогын урьдчилсан шалгалтын 5 дүрэм бүгд тэнцэв.',
+      },
+      {
+        type: 'checklist.assigned',
+        at: '2025-01-27T09:30:12+08:00',
+        actor: 'orchestrator',
+        detail: 'Динамик баримтын жагсаалт 11 баримт шаардлагаар үүсэв.',
+      },
+      {
+        type: 'document.uploaded',
+        at: '2025-01-27T14:42:03+08:00',
+        actor: 'customer',
+        detail: 'Нэмэлт орлого, татвар, санхүүгийн тайлангуудыг порталд байршуулсан.',
+      },
+      {
+        type: 'crosscheck.pass',
+        at: '2025-01-28T11:32:18+08:00',
+        actor: 'crosscheck-service',
+        detail: 'Банкны орлого, VAT борлуулалт 9% зөрүүтэй баталгаажлаа.',
+      },
+      {
+        type: 'handoff.ready',
+        at: '2025-01-28T11:45:36+08:00',
+        actor: 'packager',
+        detail: 'RM-д зориулсан Credit 360 багц, PDF, JSON бэлтгэгдэв.',
+      },
+    ],
+  },
+  evidence: {
+    collectors: [
+      {
+        id: 'zms',
+        label: 'ЗМС API',
+        confidence: 0.99,
+        capturedAt: '2025-01-27T09:22:17+08:00',
+        status: 'passed',
+        checksum: 'b1c92ed8f14b3e36b7a0ac41a1e0d715',
+        parsedFields: {
+          status: 'active',
+          dpd30_12m: 0,
+          npl: false,
+          loansOutstanding: 1,
+          totalExposure: 420000000,
+        },
+        rawProof: {
+          type: 'pdf',
+          uri: '/mock/evidence/zms-report-softmax.pdf',
+        },
+      },
+      {
+        id: 'les',
+        label: 'Хуулийн этгээдийн улсын бүртгэл (LES)',
+        confidence: 0.96,
+        capturedAt: '2025-01-27T09:23:19+08:00',
+        status: 'passed',
+        checksum: '3dced783acbfb2ad891e7fc162401796',
+        parsedFields: {
+          status: 'active',
+          incorporationDate: '2016-04-12',
+          shareholders: [
+            { name: 'С. Ариунзаяа', stake: 0.55 },
+            { name: 'Ч. Төгөлдөр', stake: 0.45 },
+          ],
+        },
+        rawProof: {
+          type: 'html',
+          uri: '/mock/evidence/les-softmax.html',
+        },
+      },
+      {
+        id: 'pledge',
+        label: 'Барьцааны бүртгэл (Playwright collector)',
+        confidence: 0.93,
+        capturedAt: '2025-01-27T09:26:04+08:00',
+        status: 'passed',
+        checksum: 'a97a9c3bd379dd6927c8b9712f97d4f0',
+        parsedFields: {
+          activeLiens: 1,
+          lienRankFree: true,
+          latestLienDate: '2024-08-11',
+        },
+        rawProof: {
+          type: 'screenshot',
+          uri: '/mock/evidence/pledge-softmax.png',
+        },
+      },
+      {
+        id: 'liquidation',
+        label: 'Татан буулгалтын жагсаалт',
+        confidence: 0.98,
+        capturedAt: '2025-01-27T09:27:31+08:00',
+        status: 'passed',
+        checksum: '8f4628bc1f05fc5a45f2d0ce4ffbe2e2',
+        parsedFields: {
+          isLiquidated: false,
+          lastChecked: '2025-01-27',
+        },
+        rawProof: {
+          type: 'json',
+          uri: '/mock/evidence/liquidation-softmax.json',
+        },
+      },
+      {
+        id: 'internaldb',
+        label: 'Softmax internal rejected loans API',
+        confidence: 0.94,
+        capturedAt: '2025-01-27T09:27:48+08:00',
+        status: 'passed',
+        checksum: 'a3c69d78bc40488ad9d6bf05364f0f2a',
+        parsedFields: {
+          previousApplications: 0,
+          lastInteraction: '2024-11-05',
+        },
+        rawProof: {
+          type: 'json',
+          uri: '/mock/evidence/internal-softmax.json',
+        },
+      },
+      {
+        id: 'tax',
+        label: 'Татварын тайлан (E-invoice + GDT)',
+        confidence: 0.92,
+        capturedAt: '2025-01-27T14:42:03+08:00',
+        status: 'passed',
+        checksum: '72cc3e8fe9f77003aa81d14833146e0b',
+        parsedFields: {
+          vatSales12m: 3920000000,
+          corporateTaxFiled: true,
+          taxArrears: 0,
+        },
+        rawProof: {
+          type: 'pdf',
+          uri: '/mock/evidence/tax-softmax.pdf',
+        },
+      },
+      {
+        id: 'ndsh',
+        label: 'НДШ шимтгэлийн бүртгэл',
+        confidence: 0.9,
+        capturedAt: '2025-01-27T14:52:18+08:00',
+        status: 'passed',
+        checksum: 'd1a6a5c22e7623dc4d56f1429d0a72b1',
+        parsedFields: {
+          headcount: 48,
+          avgWage: 2400000,
+          contributionsUpToDate: true,
+        },
+        rawProof: {
+          type: 'pdf',
+          uri: '/mock/evidence/ndsh-softmax.pdf',
+        },
+      },
+    ],
+  },
+  rules: {
+    policyPrequal: {
+      status: 'pass',
+      executedAt: '2025-01-27T09:28:40+08:00',
+      rules: [
+        {
+          id: 'active_entity',
+          status: 'pass',
+          evidence: 'LES статус идэвхтэй, татан буулгалтгүй',
+        },
+        {
+          id: 'longevity',
+          status: 'pass',
+          evidence: 'Үйл ажиллагааны түүх 8.7 жил',
+        },
+        {
+          id: 'credit_clean',
+          status: 'pass',
+          evidence: 'ЗМС чанаргүй зээл 0, 30 хоног хэтрэлт 0',
+        },
+        {
+          id: 'sector_allowed',
+          status: 'pass',
+          evidence: 'Мэдээллийн технологи салбар whitelist-д багтсан',
+        },
+        {
+          id: 'license_check',
+          status: 'pass',
+          evidence: 'Програм хангамжийн үйлчилгээ тусгай зөвшөөрөл шаардахгүй',
+        },
+      ],
+    },
+    productMatch: {
+      decidedAt: '2025-01-27T09:29:55+08:00',
+      recommendedProducts: [
+        {
+          id: 'term',
+          label: '36 сарын тоног төхөөрөмжийн зээл',
+          limit: 1200000000,
+          pricingBand: '13.4% (MNT, fixed 12 сар, дараа нь MNT+2.4%)',
+          dscr: 1.47,
+          collateral: 'GPU серверийн багц (AVM: 1.2 тэрбум)',
+          comments: 'Grace 6 сар, 72% LTV, AI дата төвийн өргөтгөл',
+        },
+        {
+          id: 'od',
+          label: 'POS орлоготой эргэлтийн зээлийн эрх',
+          limit: 450000000,
+          pricingBand: '14.1% (6 сар тутамд үнэлгээ шинэчлэнэ)',
+          dscr: 1.68,
+          collateral: 'POS орлогын барьцаа, Softmax Pay QR эргэлт',
+          comments: 'Дундаж POS орлого 380 сая ₮/сар, сезонality ±11%',
+        },
+      ],
+      rejectedProducts: [
+        {
+          id: 'invoice',
+          reason: 'E-invoice борлуулалтын 62% нь давтагдах худалдан авагчтай. Концентрацийн эрсдэл.',
+        },
+      ],
+    },
+  },
+  checklist: {
+    assignedAt: '2025-01-27T09:30:12+08:00',
+    items: [
+      { id: 'les-cert', label: 'Хуулийн этгээдийн гэрчилгээ', required: true, status: 'uploaded' },
+      { id: 'shareholder-resolution', label: 'Хувь нийлүүлэгчдийн хурлын шийдвэр', required: true, status: 'uploaded' },
+      { id: 'financials-2022', label: '2022 оны аудитлагдсан санхүүгийн тайлан', required: true, status: 'uploaded' },
+      { id: 'financials-2023', label: '2023 оны аудитлагдсан санхүүгийн тайлан', required: true, status: 'uploaded' },
+      { id: 'bank-statements', label: 'Банкны хуулга (12 сар)', required: true, status: 'uploaded' },
+      { id: 'tax-returns', label: 'Татварын тайлан, e-invoice тайлан', required: true, status: 'uploaded' },
+      { id: 'payroll', label: 'НДШ тайлан', required: true, status: 'uploaded' },
+      {
+        id: 'projection',
+        label: 'Кэш флоу төсөөлөл (GPU өргөтгөл)',
+        required: true,
+        status: 'uploaded',
+      },
+      { id: 'equipment-quote', label: 'GPU тоног төхөөрөмжийн үнийн санал', required: true, status: 'uploaded' },
+      {
+        id: 'title-deed',
+        label: 'ҮХХ өмчлөх эрхийн гэрчилгээ (Дата төв)',
+        required: false,
+        status: 'not_required',
+      },
+      { id: 'environmental', label: 'Байгаль орчны нөлөөллийн үнэлгээ', required: false, status: 'uploaded' },
+    ],
+  },
+  documents: {
+    uploads: [
+      {
+        id: 'doc-001',
+        name: 'LES_certificate_softmax.pdf',
+        class: 'registration',
+        sizeMb: 0.8,
+        sha256: '9f5842b1c9f5bc0a58e788c2ca4f3c2d5c0ec54dfc9261d5d0dfea3fcc4c66ac',
+        uploadedAt: '2025-01-27T14:42:03+08:00',
+        ocr: {
+          confidence: 0.95,
+          fields: {
+            registrationNumber: '5874213',
+            issuedAt: '2016-04-12',
+            status: 'Идэвхтэй',
+          },
+        },
+      },
+      {
+        id: 'doc-002',
+        name: 'SoftmaxAI_Financials_2023_audited.pdf',
+        class: 'financial_statement',
+        sizeMb: 4.6,
+        sha256: 'f2f2b39650c402f6d0db30c3b0cf2a9a906d3421bcfef8209835aa6d02d4f4a3',
+        uploadedAt: '2025-01-27T15:03:55+08:00',
+        ocr: {
+          confidence: 0.91,
+          fields: {
+            revenue: 4100000000,
+            ebitda: 865000000,
+            netIncome: 492000000,
+            totalDebt: 420000000,
+          },
+          tables: [
+            {
+              period: '2023-12-31',
+              assets: 5180000000,
+              liabilities: 1760000000,
+              equity: 3420000000,
+            },
+          ],
+        },
+      },
+      {
+        id: 'doc-003',
+        name: 'SoftmaxAI_BankStatements_Q1Q42024.xlsx',
+        class: 'bank_statement',
+        sizeMb: 5.1,
+        sha256: 'd0fb28ed30faa6c9bf82d4fe9fbb82bcf2faa4d8bd174f05f86c56f1a16db171',
+        uploadedAt: '2025-01-27T16:11:09+08:00',
+        ocr: {
+          confidence: 0.94,
+          tables: [
+            { month: '2024-10', credits: 389000000, debits: 354000000 },
+            { month: '2024-11', credits: 402000000, debits: 361000000 },
+            { month: '2024-12', credits: 417000000, debits: 372000000 },
+          ],
+        },
+      },
+      {
+        id: 'doc-004',
+        name: 'SoftmaxAI_VAT_Einvoice_Q42024.xml',
+        class: 'tax_statement',
+        sizeMb: 1.2,
+        sha256: '2beab78d9cb78cf207c64bd3228345b0a2a57e9cd23ef0bbbebc838f0282f58e',
+        uploadedAt: '2025-01-27T16:18:44+08:00',
+        ocr: {
+          confidence: 0.88,
+          fields: {
+            vatSales: 3920000000,
+            buyerTop3Share: 0.59,
+            arrears: 0,
+          },
+        },
+      },
+      {
+        id: 'doc-005',
+        name: 'SoftmaxAI_GPU_Purchase_Order.pdf',
+        class: 'invoice',
+        sizeMb: 0.9,
+        sha256: 'c0d4f6e0527a1999dae8becf0b81025de8eb04fed9e0cb3d8d02b99436a2e101',
+        uploadedAt: '2025-01-27T18:45:22+08:00',
+        ocr: {
+          confidence: 0.9,
+          fields: {
+            supplier: 'Bayarmaa Tech Import LLC',
+            invoiceNumber: 'BTI-INV-2518',
+            amount: 1260000000,
+            issueDate: '2025-01-20',
+          },
+        },
+      },
+      {
+        id: 'doc-006',
+        name: 'SoftmaxAI_Payroll_SepDec2024.csv',
+        class: 'payroll',
+        sizeMb: 0.7,
+        sha256: '1d74b1fe0d55520bcfa63f0e31c43155df15397d95c53964d2aa1fcd1ca9c9aa',
+        uploadedAt: '2025-01-27T19:02:18+08:00',
+        ocr: {
+          confidence: 0.87,
+          fields: {
+            headcount: 48,
+            grossPayroll: 345000000,
+            employerContribution: 51800000,
+          },
+        },
+      },
+    ],
+  },
+  crossChecks: {
+    executedAt: '2025-01-28T11:32:18+08:00',
+    accuracyScore: 0.91,
+    results: [
+      {
+        id: 'turnover',
+        label: 'Борлуулалтын орлого (Банк vs VAT)',
+        status: 'pass',
+        variance: 0.09,
+        detail: 'Банкны орлогын дундаж 402 сая ₮/сар, VAT тайлан 438 сая ₮/сар. 9%-ийн зөрүү зөвшөөрөгдөх хязгаарт.',
+      },
+      {
+        id: 'payroll',
+        label: 'Цалингийн зарлага (Банк vs НДШ)',
+        status: 'pass',
+        variance: 0.12,
+        detail: 'PayRoll outflow 312 сая ₮/сар, НДШ headcount 48 × дундаж 2.4 сая = 288 сая ₮. 12% зөрүү.',
+      },
+      {
+        id: 'debt_service',
+        label: 'ЗМС vs Бодит төлбөр',
+        status: 'pass',
+        variance: 0.05,
+        detail: 'Одоогийн зээлийн төлөлт (420 сая) ЗМС хуваарьтай 95% таарч байна.',
+      },
+      {
+        id: 'collateral',
+        label: 'Барьцаа хөрөнгийн шалгалт',
+        status: 'pass',
+        variance: 0.07,
+        detail: 'GPU хөрөнгө (AVM 1.26 тэрбум) - Аппрайнзал 1.18 тэрбум. 7%-ийн зөрүү.',
+      },
+      {
+        id: 'invoice_duplicate',
+        label: 'Нэхэмжлэх давхардлын шалгалт',
+        status: 'pass',
+        variance: 0,
+        detail: 'hash(Bayarmaa Tech, BTI-INV-2518, 2025-01-20, 1.26B) – давхардал илрээгүй.',
+      },
+    ],
+  },
+  rmPackage: {
+    generatedAt: '2025-01-28T11:45:36+08:00',
+    dossierPdf: '/mock/rm-package/softmax-credit360.pdf',
+    dossierJson: '/mock/rm-package/softmax-credit360.json',
+    summary: {
+      decision: 'Forward to RM',
+      dscr: 1.47,
+      debtCapacity: 1650000000,
+      riskHighlights: [
+        'GPU хөрөнгө дээр суурилсан барьцаа, 72% LTV',
+        'Татвар, НДШ зөрчилгүй, 12 сарын орлого тогтвортой өсөлттэй',
+        'Худалдан авагч концентраци 59%, mitigation: POS + SaaS олон талт гэрээ',
+      ],
+      nextActions: [
+        'RM – гэрээний нөхцөл, grace structure баталгаажуулах (Due: 2025-01-30)',
+        'Legal – барьцааны бүртгэл шинэчлэх, lien rank баталгаажуулах',
+      ],
+    },
+  },
+  analytics: {
+    updatedAt: '2025-01-28T12:05:00+08:00',
+    funnel: [
+      { stage: 'Lead', count: 18 },
+      { stage: 'Consent', count: 16 },
+      { stage: 'Docs Complete', count: 9 },
+      { stage: 'Cross-check OK', count: 6 },
+      { stage: 'RM Handoff', count: 5 },
+    ],
+    metrics: [
+      {
+        id: 'stp_time',
+        label: 'STP → Docs Complete (median)',
+        value: '8 цаг 41 мин',
+        delta: '-18%',
+      },
+      {
+        id: 'accuracy',
+        label: 'Accuracy ≥ 0.85 хувь',
+        value: '84%',
+        delta: '+6%',
+      },
+      {
+        id: 'rework_rate',
+        label: 'Rework rate',
+        value: '12%',
+        delta: '-9%',
+      },
+      {
+        id: 'collector_success',
+        label: 'Evidence success rate',
+        value: '94%',
+        delta: '+3%',
+      },
+    ],
+    alerts: [
+      {
+        id: 'selector-drift',
+        severity: 'medium',
+        message: 'LES UI шинэчлэл Playwright селекторын 1 элементэд нөлөөлсөн – авто засварласан.',
+        openedAt: '2025-01-26T21:14:00+08:00',
+      },
+      {
+        id: 'captcha-rate',
+        severity: 'low',
+        message: 'Пледж бүртгэлийн CAPTCHA 5% хүртэл өссөн – attended консолд шилжсэн.',
+        openedAt: '2025-01-26T20:43:00+08:00',
+      },
+    ],
+  },
+  auditLog: [
+    {
+      id: 'audit-001',
+      at: '2025-01-27T09:12:05+08:00',
+      actor: 'chatbot',
+      action: 'Lead created',
+      hash: '74a5b7f9e5b7864e9a2412a8dd78a6b54b519b6e35e6c1235ecaf8d67a7c37f2',
+    },
+    {
+      id: 'audit-002',
+      at: '2025-01-27T09:18:22+08:00',
+      actor: 'consent-vault',
+      action: 'Consent captured (6 scopes)',
+      hash: '1c0ea5600cb1d73699b7ccacfc1994b0b0d840edb160050c1e8e5edc143f89b9',
+    },
+    {
+      id: 'audit-003',
+      at: '2025-01-27T14:42:03+08:00',
+      actor: 'document-service',
+      action: 'Document ingested: LES_certificate_softmax.pdf',
+      hash: 'f7c44f0f5ae9a4fcd934d4ec9fc4593c66c9fe5ad2a9d727ec1b430ba2df6ad8',
+    },
+    {
+      id: 'audit-004',
+      at: '2025-01-28T11:32:18+08:00',
+      actor: 'crosscheck-service',
+      action: 'All cross-checks passed',
+      hash: '89fcda2ee3a6eb1d3329d3f0ba1a9f0f6204447c7b3dc6272403d37f7c876a41',
+    },
+    {
+      id: 'audit-005',
+      at: '2025-01-28T11:45:36+08:00',
+      actor: 'packager',
+      action: 'RM package generated',
+      hash: '9b37a8b18fa66dc7ff7a9551e064c7d53eac0e112f2266a6da52c559f7ed7c8f',
+    },
+  ],
+  security: {
+    rbacRoles: [
+      { role: 'rm', permissions: ['view_dossier', 'comment', 'request_changes'] },
+      { role: 'ops', permissions: ['rerun_collectors', 'upload_docs', 'audit_trail'] },
+      { role: 'auditor', permissions: ['download_logs', 'view_hash_chain'] },
+    ],
+    encryption: {
+      transit: 'mTLS 1.3, mutual cert rotation 90 хоног',
+      atRest: 'AWS KMS (CMK softmax-underwriting) + envelope encryption',
+    },
+    audit: {
+      hashChain: 'SHA3-256 + Merkle tree every 1 цаг',
+      lastSeal: '2025-01-28T12:00:00+08:00',
+    },
+  },
+}
+
+export default softmaxJourney

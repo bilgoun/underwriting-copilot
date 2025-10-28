@@ -1,0 +1,139 @@
+.customer-portal {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #050509;
+  padding: 4rem 1.5rem;
+  color: #ffffff;
+}
+
+.customer-portal__inner {
+  width: 100%;
+  max-width: 1120px;
+}
+
+.customer-portal__grid {
+  display: grid;
+  gap: 1.75rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .customer-portal__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .customer-portal__grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .loan-card {
+    grid-column: span 3;
+  }
+
+  .loan-card:nth-child(-n + 3) {
+    grid-column: span 2;
+  }
+}
+
+.loan-card {
+  position: relative;
+  width: 100%;
+}
+
+.loan-card__media {
+  position: relative;
+  min-height: 260px;
+  overflow: hidden;
+  border-radius: 28px;
+  background-color: #080712;
+  box-shadow: 0 32px 80px rgba(5, 5, 15, 0.55);
+  transition: transform 0.4s ease;
+}
+
+.loan-card:hover .loan-card__media {
+  transform: translateY(-4px);
+}
+
+.loan-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform-origin: center;
+  transition: transform 0.6s ease;
+}
+
+.loan-card:hover .loan-card__image {
+  transform: scale(1.05);
+}
+
+.loan-card__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.65) 5%, rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0) 100%);
+}
+
+.loan-card__content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.6rem 1.4rem;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border-bottom-left-radius: 28px;
+  border-bottom-right-radius: 28px;
+}
+
+@media (min-width: 640px) {
+  .loan-card__content {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.loan-card__title {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #c7cbd8;
+  margin: 0;
+}
+
+.loan-card__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 999px;
+  padding: 0.6rem 2.1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #ffffff;
+  background: #4a8ef4;
+  cursor: pointer;
+  box-shadow: 0 18px 42px rgba(74, 142, 244, 0.45);
+  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.loan-card__button:hover {
+  background: #3a7be0;
+  box-shadow: 0 14px 28px rgba(74, 142, 244, 0.35);
+  transform: translateY(-2px);
+}
+
+.loan-card__button:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.6);
+  box-shadow: none;
+  cursor: not-allowed;
+}

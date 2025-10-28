@@ -1,0 +1,9 @@
+.bank-intake {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #131314;
+  padding: 2rem 1rem;
+}

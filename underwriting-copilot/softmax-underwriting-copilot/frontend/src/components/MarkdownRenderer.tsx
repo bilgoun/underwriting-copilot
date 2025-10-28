@@ -2,6 +2,7 @@ import React from 'react';
 
 interface MarkdownRendererProps {
   markdown: string;
+  color?: string;
 }
 
 const headingStyles: Record<number, React.CSSProperties> = {
@@ -140,7 +141,7 @@ const renderInline = (text: string, keyPrefix: string): React.ReactNode[] => {
   return nodes;
 };
 
-const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ markdown }) => {
+const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ markdown, color }) => {
   const lines = markdown.split(/\r?\n/);
   const elements: React.ReactNode[] = [];
   let listBuffer: string[] = [];
@@ -286,7 +287,7 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ markdown }) => {
         display: 'flex',
         flexDirection: 'column',
         gap: '0.25rem',
-        color: '#2d3748',
+        color: color ?? '#2d3748',
       }}
     >
       {elements}
