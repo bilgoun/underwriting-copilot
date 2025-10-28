@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import businessLoanCatalog from '../../../business_loans_mn.json'
+import businessLoanCatalog from '../data/business_loans_mn.json'
 import { loanProducts } from '../data/loanProducts'
 import './LoanApplication.css'
 
