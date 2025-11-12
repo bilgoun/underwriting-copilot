@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import softmaxJourney from '../data/softmaxJourney'
+import softmaxJourneyData from '../data/softmaxJourney'
+import individualJourneySource from '../data/individualJourney'
 import './JourneyDemo.css'
 
 const stageSequence = [
@@ -11,6 +12,7 @@ const stageSequence = [
   'checklist',
   'documents',
   'cross',
+  'committee',
   'rm',
   'analytics',
   'security',
@@ -24,6 +26,7 @@ const stageLabels = {
   checklist: 'Dynamic checklist',
   documents: 'Document AI ingestion',
   cross: 'Cross-check scoring',
+  committee: 'Loan committee transcript',
   rm: 'RM handoff package',
   analytics: 'Analytics & observability',
   security: 'Security & immutable audit',
@@ -37,6 +40,7 @@ const stageDurations = {
   checklist: 2600,
   documents: 4200,
   cross: 3600,
+  committee: 3200,
   rm: 3000,
   analytics: 2600,
   security: 2600,
@@ -71,6 +75,10 @@ const stageLoadingStates = {
     message: 'LLM cross-check analyst reconciling…',
     caption: 'Bank↔VAT, Payroll↔НДШ, ЗМС schedule зөрүүг шалгаж байна',
   },
+  committee: {
+    message: 'Loan committee review syncing…',
+    caption: 'Transcript, motions, cure stack, and bridge offers',
+  },
   rm: {
     message: 'Packaging RM dossier…',
     caption: 'Decision cards, DSCR math, proof links',
@@ -86,6 +94,41 @@ const stageLoadingStates = {
 }
 
 const totalDuration = stageSequence.reduce((sum, stage) => sum + stageDurations[stage], 0)
+
+const individualJourneyDemo = buildIndividualJourneyDemo(individualJourneySource)
+
+const journeyVariants = [
+  {
+    id: 'softmax',
+    label: 'Softmax AI LLC',
+    buttonLabel: 'Run Demo 1',
+    chip: 'Softmax AI × Automated Credit Copilot',
+    title: 'Softmax AI — Fully Automated RM Handoff',
+    subtitle:
+      'Watch the entire underwriting journey unfold automatically: chatbot lead capture, consent vault, orchestrated data collectors, policy rules, document AI, deterministic cross-checks, and the packaged RM dossier.',
+    summaryLabel: 'Loan request insight',
+    durationLabel: '~35 секунд',
+    durationHelper: 'Automated end-to-end',
+    completenessLabel: '100%',
+    completenessHelper: 'All docs QA’d at 0.85+ confidence',
+    journey: softmaxJourneyData,
+  },
+  {
+    id: 'individual',
+    label: 'Батзаяа · Микро бизнес',
+    buttonLabel: 'Run Demo 2',
+    chip: 'Micro entrepreneur × Digital Portal',
+    title: 'Батзаяа — Portal-to-RM Journey',
+    subtitle:
+      'See how a micro business owner’s portal submission, government data fetch, and cross-checks flow into a declined-yet-coached RM package.',
+    summaryLabel: 'Portal submission insight',
+    durationLabel: '~28 секунд',
+    durationHelper: 'Portal → gov data → RM decision',
+    completenessLabel: '92%',
+    completenessHelper: 'Portal, gov fetch, and bank statements synced',
+    journey: individualJourneyDemo,
+  },
+]
 
 const severityClass = {
   low: 'journey-alert--low',
@@ -118,18 +161,73 @@ const formatValue = (value) => {
   return String(value)
 }
 
-const formatArrayField = (value) => {
-  if (!value.length) return '—'
-  if (typeof value[0] === 'object') {
-    return value.map((item) => Object.values(item).join(' ')).join(' / ')
+const MAX_FIELD_LIST_ITEMS = 4
+
+const formatFieldLabel = (label) =>
+  label
+    .replace(/[_-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+
+const renderEvidenceValue = (value, depth = 0) => {
+  if (value == null) {
+    return <span className="journey-field__text">—</span>
   }
-  return value.join(', ')
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) {
+      return <span className="journey-field__text">—</span>
+    }
+
+    const displayItems = value.slice(0, MAX_FIELD_LIST_ITEMS)
+    const hasMore = value.length > displayItems.length
+
+    return (
+      <ul className="journey-field__list" data-depth={depth}>
+        {displayItems.map((entry, index) => (
+          <li key={`${index}-${typeof entry}`}>
+            {typeof entry === 'object' && entry !== null ? (
+              <div className="journey-field__nested">
+                {Object.entries(entry).map(([childKey, childValue]) => (
+                  <div key={childKey} className="journey-field__nested-row">
+                    <small>{formatFieldLabel(childKey)}</small>
+                    <div className="journey-field__nested-value">{renderEvidenceValue(childValue, depth + 1)}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="journey-field__text">{formatValue(entry)}</span>
+            )}
+          </li>
+        ))}
+        {hasMore ? <small className="journey-field__more">+{value.length - displayItems.length} more entries</small> : null}
+      </ul>
+    )
+  }
+
+  if (typeof value === 'object') {
+    return (
+      <div className="journey-field__grid" data-depth={depth}>
+        {Object.entries(value).map(([key, childValue]) => (
+          <div key={key} className="journey-field__grid-item">
+            <small>{formatFieldLabel(key)}</small>
+            <div className="journey-field__nested-value">{renderEvidenceValue(childValue, depth + 1)}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return <span className="journey-field__text">{formatValue(value)}</span>
 }
 
 export default function JourneyDemo() {
   const location = useLocation()
   const intakeContext = location.state ?? null
 
+  const [activeVariant, setActiveVariant] = useState(journeyVariants[0].id)
   const [demoStarted, setDemoStarted] = useState(false)
   const [demoComplete, setDemoComplete] = useState(false)
   const [runId, setRunId] = useState(0)
@@ -143,21 +241,44 @@ export default function JourneyDemo() {
   const stageRefs = useRef({})
   const scrollAnimationRef = useRef(null)
 
+  const journeyOption = journeyVariants.find((variant) => variant.id === activeVariant) ?? journeyVariants[0]
+  const journey = journeyOption.journey
+  const committeeMeeting = journey.loanCommittee ?? null
+  const committeeRecordedAt =
+    committeeMeeting?.recordedAt != null ? dateFormatter.format(new Date(committeeMeeting.recordedAt)) : null
+  const committeePanelLabel = committeeMeeting?.panel?.length
+    ? committeeMeeting.panel
+        .map((member) => (member.role ? `${member.name} (${member.role})` : member.name))
+        .join(', ')
+    : null
+
   const orchestratorStates = useMemo(
-    () => softmaxJourney.orchestrator.stateMachine.map((state) => ({ ...state, reachedAtDate: new Date(state.reachedAt) })),
-    [],
+    () =>
+      journey.orchestrator?.stateMachine?.map((state) => ({
+        ...state,
+        reachedAtDate: new Date(state.reachedAt),
+      })) ?? [],
+    [journey],
   )
 
-  const evidenceCards = useMemo(() => softmaxJourney.evidence.collectors, [])
+  const evidenceCards = useMemo(() => journey.evidence?.collectors ?? [], [journey])
 
-  const requestAmount = intakeContext?.form?.amount ?? softmaxJourney.intent.amount
-  const requestPurpose = intakeContext?.form?.fundingPurpose || softmaxJourney.intent.narrative
-  const contactName = intakeContext?.form?.fullName || softmaxJourney.lead.contact.name
-  const companyName = intakeContext?.form?.companyName || softmaxJourney.entity.legalName
-  const contactPhone = intakeContext?.form?.phone || softmaxJourney.lead.contact.phone
-  const contactEmail = intakeContext?.form?.email || softmaxJourney.lead.contact.email
+  const requestAmount = intakeContext?.form?.amount ?? journey.intent?.amount ?? 0
+  const requestPurpose = intakeContext?.form?.fundingPurpose || journey.intent?.narrative || '—'
+  const contactName =
+    intakeContext?.form?.fullName ||
+    journey.lead?.contact?.name ||
+    journey.entity?.fullName ||
+    journey.entity?.legalName ||
+    '—'
+  const companyName =
+    intakeContext?.form?.companyName || journey.entity?.legalName || journey.entity?.fullName || journey.entity?.type || '—'
+  const contactPhone =
+    intakeContext?.form?.phone || journey.lead?.contact?.phone || journey.entity?.relationshipManager?.phone || '—'
+  const contactEmail =
+    intakeContext?.form?.email || journey.lead?.contact?.email || journey.entity?.relationshipManager?.email || '—'
   const productTitle =
-    intakeContext?.productTitle || softmaxJourney.rules.productMatch.recommendedProducts[0]?.label || 'Term loan'
+    intakeContext?.productTitle || journey.rules?.productMatch?.recommendedProducts?.[0]?.label || 'Term loan'
 
   const currentStageKey = activeStageIndex >= 0 ? stageSequence[activeStageIndex] : null
   const upcomingStageKey =
@@ -236,19 +357,23 @@ export default function JourneyDemo() {
     [cancelScrollAnimation],
   )
 
-  const handleStart = () => {
-    const hasRunningStage = Object.values(stageStatus).some((status) => status === 'running')
-    if (!demoComplete && demoStarted && hasRunningStage) return
+  const handleStart = useCallback(
+    (variantId) => {
+      const hasRunningStage = Object.values(stageStatus).some((status) => status === 'running')
+      if (!demoComplete && demoStarted && hasRunningStage) return
 
-    setDemoComplete(false)
-    setStageStatus({})
-    setActiveStageIndex(-1)
-    setTimelineActiveCount(0)
-    setProgressPercent(0)
-    setDemoStartTime(Date.now())
-    setRunId((id) => id + 1)
-    setDemoStarted(true)
-  }
+      setActiveVariant(variantId)
+      setDemoComplete(false)
+      setStageStatus({})
+      setActiveStageIndex(-1)
+      setTimelineActiveCount(0)
+      setProgressPercent(0)
+      setDemoStartTime(Date.now())
+      setRunId((id) => id + 1)
+      setDemoStarted(true)
+    },
+    [demoComplete, demoStarted, stageStatus],
+  )
 
   useEffect(() => {
     if (!demoStarted || demoStartTime == null) return
@@ -349,6 +474,9 @@ export default function JourneyDemo() {
     }
   }, [stageStatus.timeline, orchestratorStates.length])
 
+  const hasRunningStage = Object.values(stageStatus).some((status) => status === 'running')
+  const isDemoRunning = demoStarted && !demoComplete && hasRunningStage
+
   const stageState = (stage) => stageStatus[stage]
   const stageVisible = (stage) => Boolean(stageStatus[stage])
   const runningStageLabel =
@@ -382,17 +510,14 @@ export default function JourneyDemo() {
       </div>
 
       <header className="journey-hero">
-        <div className="journey-hero__chip">Softmax AI × Automated Credit Copilot</div>
+        <div className="journey-hero__chip">{journeyOption.chip}</div>
         <div className="journey-hero__header">
           <div>
-            <h1 className="journey-hero__title">Softmax AI — Fully Automated RM Handoff</h1>
-            <p className="journey-hero__subtitle">
-              Watch the entire underwriting journey unfold automatically: chatbot lead capture, consent vault, orchestrated data
-              collectors, policy rules, document AI, deterministic cross-checks, and the packaged RM dossier.
-            </p>
+            <h1 className="journey-hero__title">{journeyOption.title}</h1>
+            <p className="journey-hero__subtitle">{journeyOption.subtitle}</p>
           </div>
           <div className="journey-hero__summary-card">
-            <span className="journey-hero__summary-label">Loan request insight</span>
+            <span className="journey-hero__summary-label">{journeyOption.summaryLabel}</span>
             <strong className="journey-hero__summary-value">{currencyFormatter.format(requestAmount)}</strong>
             <p className="journey-hero__summary-meta">
               {requestPurpose}
@@ -413,28 +538,55 @@ export default function JourneyDemo() {
         </div>
 
         <div className="journey-hero__grid">
-          <HeroStat label="Accuracy Score" value={`${Math.round(softmaxJourney.orchestrator.accuracyScore * 100)}%`} />
-          <HeroStat label="Completeness" value="100%" helper="All docs QA’d at 0.85+ confidence" />
+          <HeroStat
+            label="Accuracy Score"
+            value={
+              journey.orchestrator?.accuracyScore != null
+                ? `${Math.round(journey.orchestrator.accuracyScore * 100)}%`
+                : '—'
+            }
+          />
+          <HeroStat label="Completeness" value={journeyOption.completenessLabel} helper={journeyOption.completenessHelper} />
           <HeroStat
             label="RM contact"
-            value={softmaxJourney.entity.relationshipManager.name}
-            helper={`${softmaxJourney.entity.relationshipManager.phone} · ${softmaxJourney.entity.relationshipManager.email}`}
+            value={journey.entity?.relationshipManager?.name ?? '—'}
+            helper={
+              journey.entity?.relationshipManager
+                ? `${journey.entity.relationshipManager.phone} · ${journey.entity.relationshipManager.email}`
+                : ''
+            }
           />
-          <HeroStat label="Journey length" value="~35 секунд" helper="Automated end-to-end" />
+          <HeroStat label="Journey length" value={journeyOption.durationLabel} helper={journeyOption.durationHelper} />
         </div>
 
         <div className="journey-hero__actions">
-          <button
-            type="button"
-            className="journey-hero__cta"
-            onClick={handleStart}
-            disabled={!demoComplete && demoStarted && Object.values(stageStatus).some((status) => status === 'running')}
-          >
-            {demoComplete ? 'Replay Demo' : !demoStarted || Object.keys(stageStatus).length === 0 ? 'Start Demo' : 'Running…'}
-          </button>
+          <div className="journey-hero__cta-group">
+            {journeyVariants.map((variant) => {
+              const isVariantActive = variant.id === activeVariant
+              const label =
+                isVariantActive && demoComplete ? 'Replay Demo' : variant.buttonLabel
+              return (
+                <button
+                  key={variant.id}
+                  type="button"
+                  className={`journey-hero__cta${isVariantActive ? ' journey-hero__cta--active' : ''}`}
+                  onClick={() => handleStart(variant.id)}
+                  disabled={isDemoRunning && variant.id !== activeVariant}
+                >
+                  {isVariantActive && isDemoRunning ? 'Running…' : label}
+                </button>
+              )
+            })}
+          </div>
           <div className="journey-hero__status">
-            <span>{demoComplete ? 'All steps automated — ready for RM review.' : runningStageLabel}</span>
-            {!demoComplete && <small>{upcomingStageLabel}</small>}
+            <span>
+              {demoComplete
+                ? `${journeyOption.label} automation complete — ready for RM review.`
+                : runningStageLabel}
+            </span>
+            {!demoComplete && (
+              <small>{upcomingStageLabel || `Select Run Demo 1 or 2 to view different loan journeys.`}</small>
+            )}
           </div>
         </div>
       </header>
@@ -449,27 +601,59 @@ export default function JourneyDemo() {
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.15s' }}>
                 <h3 className="journey-card__title">Lead snapshot</h3>
                 <dl className="journey-list">
-                  <ListItem label="Lead ID" value={softmaxJourney.lead.leadId} />
-                  <ListItem label="Channel" value="Chatbot → Portal" />
-                  <ListItem label="Company" value={`${softmaxJourney.entity.legalName} / ${softmaxJourney.entity.englishName}`} />
-                  <ListItem label="BRN" value={softmaxJourney.entity.brn} />
-                  <ListItem label="Contact" value={`${contactName}, Санхүү хариуцсан захирал`} />
+                  <ListItem label="Lead ID" value={journey.lead?.leadId ?? '—'} />
+                  <ListItem label="Channel" value={journey.lead?.channel ?? 'Portal'} />
+                  <ListItem
+                    label={journey.entity?.legalName ? 'Company' : 'Borrower'}
+                    value={
+                      journey.entity?.legalName && journey.entity?.englishName
+                        ? `${journey.entity.legalName} / ${journey.entity.englishName}`
+                        : journey.entity?.legalName || journey.entity?.fullName || '—'
+                    }
+                  />
+                  {journey.entity?.brn ? (
+                    <ListItem label="BRN" value={journey.entity.brn} />
+                  ) : (
+                    <ListItem
+                      label="Иргэний РД"
+                      value={journey.entity?.nationalIdFromPortal || journey.entity?.nationalIdFromHUR || '—'}
+                    />
+                  )}
+                  <ListItem
+                    label="Contact"
+                    value={`${contactName}${journey.lead?.contact?.title ? `, ${journey.lead.contact.title}` : ''}`}
+                  />
                   <ListItem label="Phone" value={contactPhone} />
                   <ListItem label="Email" value={contactEmail} />
-                  <ListItem label="Suggested products" value={softmaxJourney.lead.productsSuggested.join(', ')} />
-                  <ListItem label="Created" value={dateFormatter.format(new Date(softmaxJourney.lead.createdAt))} />
+                  <ListItem
+                    label="Suggested products"
+                    value={
+                      journey.lead?.productsSuggested?.length ? journey.lead.productsSuggested.join(', ') : '—'
+                    }
+                  />
+                  <ListItem
+                    label="Created"
+                    value={
+                      journey.lead?.createdAt ? dateFormatter.format(new Date(journey.lead.createdAt)) : '—'
+                    }
+                  />
                 </dl>
-                <div className="journey-transcript">
-                  <p className="journey-transcript__label">Chat transcript (excerpt)</p>
-                  <ul className="journey-transcript__list">
-                    {softmaxJourney.lead.chatbotTranscript.map((message) => (
-                      <li key={message.id} className={`journey-transcript__item journey-transcript__item--${message.actor}`}>
-                        <span>{message.content}</span>
-                        <time>{dateFormatter.format(new Date(message.timestamp))}</time>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {(journey.lead?.chatbotTranscript ?? []).length > 0 && (
+                  <div className="journey-transcript">
+                    <p className="journey-transcript__label">Chat transcript (excerpt)</p>
+                    <ul className="journey-transcript__list">
+                      {journey.lead?.chatbotTranscript?.map((message) => (
+                        <li
+                          key={message.id}
+                          className={`journey-transcript__item journey-transcript__item--${message.actor}`}
+                        >
+                          <span>{message.content}</span>
+                          <time>{dateFormatter.format(new Date(message.timestamp))}</time>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.32s' }}>
                 <h3 className="journey-card__title">Consent scopes</h3>
@@ -477,12 +661,26 @@ export default function JourneyDemo() {
                   Consent Vault logs every scope, hashes proofs, and attaches consent_id on all downstream calls.
                 </p>
                 <dl className="journey-list">
-                  <ListItem label="Consent ID" value={softmaxJourney.consents.consentId} />
-                  <ListItem label="Granted" value={dateFormatter.format(new Date(softmaxJourney.consents.grantedAt))} />
-                  <ListItem label="Expires" value={dateFormatter.format(new Date(softmaxJourney.consents.expiresAt))} />
+                  <ListItem label="Consent ID" value={journey.consents?.consentId ?? '—'} />
+                  <ListItem
+                    label="Granted"
+                    value={
+                      journey.consents?.grantedAt
+                        ? dateFormatter.format(new Date(journey.consents.grantedAt))
+                        : '—'
+                    }
+                  />
+                  <ListItem
+                    label="Expires"
+                    value={
+                      journey.consents?.expiresAt
+                        ? dateFormatter.format(new Date(journey.consents.expiresAt))
+                        : '—'
+                    }
+                  />
                 </dl>
                 <div className="journey-consents">
-                  {softmaxJourney.consents.scopes.map((scope, index) => (
+                  {(journey.consents?.scopes ?? []).map((scope, index) => (
                     <article
                       className="journey-consent journey-card--animate"
                       key={scope.scope}
@@ -540,7 +738,7 @@ export default function JourneyDemo() {
               <div className="journey-events">
                 <h4>Key events</h4>
                 <ul>
-                  {softmaxJourney.orchestrator.events.map((event, index) => (
+                  {(journey.orchestrator?.events ?? []).map((event, index) => (
                     <li
                       key={`${event.type}-${event.at}`}
                       className="journey-events__item journey-card--animate"
@@ -567,32 +765,56 @@ export default function JourneyDemo() {
             <StageLoading stage="evidence" />
           ) : (
             <div className="journey-grid journey-grid--three">
-              {evidenceCards.map((collector, index) => (
-                <article
-                  className="journey-card journey-card--animate"
-                  key={collector.id}
-                  style={{ animationDelay: `${0.15 + index * 0.12}s` }}
-                >
-                  <header>
-                    <span className="journey-pill journey-pill--pass">Pass</span>
-                    <strong>{collector.label}</strong>
-                  </header>
-                  <dl className="journey-list journey-list--compact">
-                    <ListItem label="Captured" value={dateFormatter.format(new Date(collector.capturedAt))} />
-                    <ListItem label="Confidence" value={`${Math.round(collector.confidence * 100)}%`} />
-                    <ListItem label="Checksum" value={collector.checksum.slice(0, 12)} />
-                  </dl>
-                  <div className="journey-evidence__fields">
-                    {Object.entries(collector.parsedFields).map(([field, value]) => (
-                      <div key={field}>
-                        <span>{field}</span>
-                        <strong>{Array.isArray(value) ? formatArrayField(value) : formatValue(value)}</strong>
-                      </div>
-                    ))}
-                  </div>
-                  <span className="journey-link">View raw proof (mock)</span>
-                </article>
-              ))}
+              {evidenceCards.map((collector, index) => {
+                const status = collector.status ?? 'passed'
+                const pillClass =
+                  status === 'failed'
+                    ? 'journey-pill--fail'
+                    : status === 'pending'
+                      ? 'journey-pill--warn'
+                      : 'journey-pill--pass'
+                const pillLabel =
+                  status === 'passed'
+                    ? 'Pass'
+                    : status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ')
+                const fieldEntries = Object.entries(collector.parsedFields ?? {})
+                return (
+                  <article
+                    className="journey-card journey-card--animate"
+                    key={collector.id}
+                    style={{ animationDelay: `${0.15 + index * 0.12}s` }}
+                  >
+                    <header>
+                      <span className={`journey-pill ${pillClass}`}>{pillLabel}</span>
+                      <strong>{collector.label}</strong>
+                    </header>
+                    <dl className="journey-list journey-list--compact">
+                      <ListItem
+                        label="Captured"
+                        value={collector.capturedAt ? dateFormatter.format(new Date(collector.capturedAt)) : '—'}
+                      />
+                      <ListItem
+                        label="Confidence"
+                        value={collector.confidence != null ? `${Math.round(collector.confidence * 100)}%` : '—'}
+                      />
+                      <ListItem label="Checksum" value={collector.checksum ? collector.checksum.slice(0, 12) : '—'} />
+                    </dl>
+                    <div className="journey-evidence__fields">
+                      {fieldEntries.length ? (
+                        fieldEntries.map(([field, value]) => (
+                          <div className="journey-evidence__field" key={field}>
+                            <span className="journey-evidence__field-label">{formatFieldLabel(field)}</span>
+                            <div className="journey-evidence__field-value">{renderEvidenceValue(value)}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="journey-evidence__empty">No structured fields returned</span>
+                      )}
+                    </div>
+                    {collector.rawProof?.uri ? <span className="journey-link">View raw proof (mock)</span> : null}
+                  </article>
+                )
+              })}
             </div>
           )}
         </section>
@@ -608,39 +830,53 @@ export default function JourneyDemo() {
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.18s' }}>
                 <h3 className="journey-card__title">Policy rules</h3>
                 <ul className="journey-rule-list">
-                  {softmaxJourney.rules.policyPrequal.rules.map((rule, index) => (
-                    <li
-                      key={rule.id}
-                      className="journey-card--animate"
-                      style={{ animationDelay: `${0.26 + index * 0.08}s` }}
-                    >
-                      <div>
-                        <strong>{rule.id}</strong>
-                        <span className="journey-pill journey-pill--pass">Pass</span>
-                      </div>
-                      <p>{rule.evidence}</p>
-                    </li>
-                  ))}
+                  {(journey.rules?.policyPrequal?.rules ?? []).map((rule, index) => {
+                    const status = rule.status ?? 'pass'
+                    const pillClass =
+                      status === 'fail'
+                        ? 'journey-pill--fail'
+                        : status === 'warn'
+                          ? 'journey-pill--warn'
+                          : 'journey-pill--pass'
+                    const pillLabel =
+                      status === 'pass' ? 'Pass' : status === 'fail' ? 'Fail' : status === 'warn' ? 'Warn' : status
+                    return (
+                      <li
+                        key={rule.id}
+                        className="journey-card--animate"
+                        style={{ animationDelay: `${0.26 + index * 0.08}s` }}
+                      >
+                        <div>
+                          <strong>{rule.id}</strong>
+                          <span className={`journey-pill ${pillClass}`}>{pillLabel}</span>
+                        </div>
+                        <p>{rule.evidence}</p>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.34s' }}>
                 <h3 className="journey-card__title">Recommended bundle</h3>
                 <ul className="journey-product-list">
-                  {softmaxJourney.rules.productMatch.recommendedProducts.map((product, index) => (
+                  {(journey.rules?.productMatch?.recommendedProducts ?? []).map((product, index) => (
                     <li
                       key={product.id}
-                      className="journey-card--animate"
+                      className="journey-card journey-card--animate"
                       style={{ animationDelay: `${0.42 + index * 0.12}s` }}
                     >
                       <div className="journey-product-list__header">
                         <strong>{product.label}</strong>
-                        <span>{currencyFormatter.format(product.limit)}</span>
+                        {product.limit != null && <span>{currencyFormatter.format(product.limit)}</span>}
                       </div>
                       <dl className="journey-list journey-list--compact">
-                        <ListItem label="Pricing" value={product.pricingBand} />
-                        <ListItem label="DSCR" value={product.dscr.toFixed(2)} />
-                        <ListItem label="Collateral" value={product.collateral} />
-                        <ListItem label="Notes" value={product.comments} />
+                        {product.pricingBand && <ListItem label="Pricing" value={product.pricingBand} />}
+                        {product.dscr != null && <ListItem label="DSCR" value={product.dscr.toFixed(2)} />}
+                        {product.paymentCap != null && (
+                          <ListItem label="Payment cap" value={currencyFormatter.format(product.paymentCap)} />
+                        )}
+                        {product.collateral && <ListItem label="Collateral" value={product.collateral} />}
+                        {product.comments && <ListItem label="Notes" value={product.comments} />}
                       </dl>
                     </li>
                   ))}
@@ -648,7 +884,7 @@ export default function JourneyDemo() {
                 <div className="journey-rejected journey-card--animate" style={{ animationDelay: '0.68s' }}>
                   <p>Rejected products</p>
                   <ul>
-                    {softmaxJourney.rules.productMatch.rejectedProducts.map((entry) => (
+                    {(journey.rules?.productMatch?.rejectedProducts ?? []).map((entry) => (
                       <li key={entry.id}>
                         <span>{entry.id}</span>
                         <p>{entry.reason}</p>
@@ -672,23 +908,37 @@ export default function JourneyDemo() {
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.18s' }}>
                 <h3 className="journey-card__title">Checklist status</h3>
                 <ul className="journey-checklist">
-                  {softmaxJourney.checklist.items.map((item, index) => (
-                    <li
-                      key={item.id}
-                      className={`journey-checklist__item journey-card--animate ${
-                        item.status === 'uploaded' ? 'journey-checklist__item--pass' : ''
-                      }`}
-                      style={{ animationDelay: `${0.26 + index * 0.06}s` }}
-                    >
-                      <div>
-                        <strong>{item.label}</strong>
-                        <span>{item.required ? 'Required' : 'Optional'}</span>
-                      </div>
-                      <span className="journey-pill journey-pill--pass">
-                        {item.status === 'uploaded' ? 'Uploaded' : item.status === 'not_required' ? 'Waived' : 'Pending'}
-                      </span>
-                    </li>
-                  ))}
+                  {(journey.checklist?.items ?? []).map((item, index) => {
+                    const status = item.status ?? 'pending'
+                    const itemClass =
+                      status === 'uploaded' || status === 'not_required' ? 'journey-checklist__item--pass' : ''
+                    let pillClass = 'journey-pill--pass'
+                    if (status === 'pending') pillClass = 'journey-pill--warn'
+                    if (status === 'rejected') pillClass = 'journey-pill--fail'
+                    const pillLabel =
+                      status === 'uploaded'
+                        ? 'Uploaded'
+                        : status === 'not_required'
+                          ? 'Waived'
+                          : status === 'synced'
+                            ? 'Synced'
+                            : status === 'rejected'
+                              ? 'Rejected'
+                              : 'Pending'
+                    return (
+                      <li
+                        key={item.id}
+                        className={`journey-checklist__item journey-card--animate ${itemClass}`}
+                        style={{ animationDelay: `${0.26 + index * 0.06}s` }}
+                      >
+                        <div>
+                          <strong>{item.label}</strong>
+                          <span>{item.required ? 'Required' : 'Optional'}</span>
+                        </div>
+                        <span className={`journey-pill ${pillClass}`}>{pillLabel}</span>
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.34s' }}>
@@ -722,15 +972,17 @@ export default function JourneyDemo() {
                   </tr>
                 </thead>
                 <tbody>
-                  {softmaxJourney.documents.uploads.map((doc, index) => (
+                  {(journey.documents?.uploads ?? []).map((doc, index) => (
                     <tr key={doc.id} className="journey-card--animate" style={{ animationDelay: `${0.3 + index * 0.08}s` }}>
                       <td>
                         <span>{doc.name}</span>
-                        <small>{dateFormatter.format(new Date(doc.uploadedAt))}</small>
+                        {doc.uploadedAt && <small>{dateFormatter.format(new Date(doc.uploadedAt))}</small>}
                       </td>
                       <td>{doc.class}</td>
-                      <td>{doc.sizeMb.toFixed(1)} MB</td>
-                      <td>{Math.round(doc.ocr.confidence * 100)}%</td>
+                      <td>{doc.sizeMb != null ? `${doc.sizeMb.toFixed(1)} MB` : '—'}</td>
+                      <td>
+                        {doc.ocr?.confidence != null ? `${Math.round(doc.ocr.confidence * 100)}%` : '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -748,21 +1000,128 @@ export default function JourneyDemo() {
           ) : (
             <div className="journey-card journey-card--animate" style={{ animationDelay: '0.18s' }}>
               <ul className="journey-crosschecks">
-                {softmaxJourney.crossChecks.results.map((item, index) => (
-                  <li key={item.id} className="journey-card--animate" style={{ animationDelay: `${0.28 + index * 0.08}s` }}>
-                    <div>
-                      <strong>{item.label}</strong>
-                      <span className="journey-pill journey-pill--pass">Pass</span>
-                    </div>
-                    <p>{item.detail}</p>
-                    <small>Variance: {formatPercent(item.variance)}</small>
-                  </li>
-                ))}
+                {(journey.crossChecks?.results ?? []).map((item, index) => {
+                  const status = item.status ?? 'pass'
+                  const pillClass =
+                    status === 'fail'
+                      ? 'journey-pill--fail'
+                      : status === 'warn' || status === 'unverified'
+                        ? 'journey-pill--warn'
+                        : 'journey-pill--pass'
+                  const pillLabel =
+                    status === 'pass'
+                      ? 'Pass'
+                      : status === 'fail'
+                        ? 'Fail'
+                        : status === 'warn'
+                          ? 'Warn'
+                          : status === 'unverified'
+                            ? 'Review'
+                            : status
+                  return (
+                    <li
+                      key={item.id}
+                      className="journey-card--animate"
+                      style={{ animationDelay: `${0.28 + index * 0.08}s` }}
+                    >
+                      <div>
+                        <strong>{item.label}</strong>
+                        <span className={`journey-pill ${pillClass}`}>{pillLabel}</span>
+                      </div>
+                      <p>{item.detail}</p>
+                      {item.variance != null && <small>Variance: {formatPercent(item.variance)}</small>}
+                    </li>
+                  )
+                })}
               </ul>
               <footer className="journey-card__footer">
                 <strong>Accuracy Score:</strong>
-                <span>{Math.round(softmaxJourney.crossChecks.accuracyScore * 100)}%</span>
+                <span>
+                  {journey.crossChecks?.accuracyScore != null
+                    ? `${Math.round(journey.crossChecks.accuracyScore * 100)}%`
+                    : '—'}
+                </span>
               </footer>
+            </div>
+          )}
+        </section>
+      )}
+
+      {stageVisible('committee') && (
+        <section ref={assignStageRef.committee} className="journey-section journey-section--animated" aria-live="polite">
+          <SectionHeader title="8. Loan committee transcript" subtitle="Panel deliberations, motions, and cure stack tracking" />
+          {stageState('committee') !== 'complete' ? (
+            <StageLoading stage="committee" />
+          ) : committeeMeeting ? (
+            <div className="journey-grid journey-grid--two">
+              <div className="journey-card journey-card--animate" style={{ animationDelay: '0.18s' }}>
+                <h3 className="journey-card__title">Discussion highlights</h3>
+                <p className="journey-card__lead">
+                  {[
+                    committeeMeeting.moderator ? `Moderator: ${committeeMeeting.moderator}` : null,
+                    committeeRecordedAt ? `Recorded ${committeeRecordedAt}` : null,
+                    committeePanelLabel ? `Panel: ${committeePanelLabel}` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || '—'}
+                </p>
+                <ul className="journey-transcript">
+                  {(committeeMeeting.transcript ?? []).map((entry, index) => (
+                    <li
+                      key={`${entry.speaker}-${index}`}
+                      className="journey-transcript__item journey-card--animate"
+                      style={{ animationDelay: `${0.26 + index * 0.06}s` }}
+                    >
+                      <div className="journey-transcript__header">
+                        <strong className="journey-transcript__speaker">{entry.speaker}</strong>
+                        {entry.focus ? <span className="journey-transcript__focus">{entry.focus}</span> : null}
+                      </div>
+                      <p className="journey-transcript__content">{entry.content}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="journey-card journey-card--animate" style={{ animationDelay: '0.32s' }}>
+                <h3 className="journey-card__title">Motions & votes</h3>
+                <div className="journey-motions">
+                  {(committeeMeeting.motions ?? []).map((motion, index) => (
+                    <article
+                      key={motion.id ?? `${motion.title}-${index}`}
+                      className="journey-motion journey-card--animate"
+                      style={{ animationDelay: `${0.4 + index * 0.08}s` }}
+                    >
+                      <header className="journey-motion__header">
+                        <strong className="journey-motion__title">{motion.title}</strong>
+                        <span className="journey-motion__result">{motion.result ?? '—'}</span>
+                      </header>
+                      <p className="journey-motion__proposal">{motion.proposal}</p>
+                      {motion.rationale ? <p className="journey-motion__meta">{motion.rationale}</p> : null}
+                      {motion.conditions?.length ? (
+                        <ul className="journey-motion__conditions">
+                          {motion.conditions.map((condition) => (
+                            <li key={condition}>{condition}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </article>
+                  ))}
+                </div>
+                {committeeMeeting.followUps?.length ? (
+                  <div className="journey-committee-meta">
+                    <strong>Follow-ups</strong>
+                    <ul>
+                      {committeeMeeting.followUps.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <div className="journey-card journey-card--animate" style={{ animationDelay: '0.2s' }}>
+              <h3 className="journey-card__title">No committee review required</h3>
+              <p className="journey-card__lead">This scenario bypassed a formal loan committee.</p>
             </div>
           )}
         </section>
@@ -770,7 +1129,7 @@ export default function JourneyDemo() {
 
       {stageVisible('rm') && (
         <section ref={assignStageRef.rm} className="journey-section journey-section--animated" aria-live="polite">
-          <SectionHeader title="8. RM handoff package" subtitle="Credit 360 dossier with decisions, proofs, and next steps" />
+          <SectionHeader title="9. RM handoff package" subtitle="Credit 360 dossier with decisions, proofs, and next steps" />
           {stageState('rm') !== 'complete' ? (
             <StageLoading stage="rm" />
           ) : (
@@ -778,15 +1137,26 @@ export default function JourneyDemo() {
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.18s' }}>
                 <h3 className="journey-card__title">Decision summary</h3>
                 <dl className="journey-list">
-                  <ListItem label="Decision" value={softmaxJourney.rmPackage.summary.decision} />
-                  <ListItem label="DSCR" value={softmaxJourney.rmPackage.summary.dscr.toFixed(2)} />
+                  <ListItem label="Decision" value={journey.rmPackage?.summary?.decision ?? '—'} />
+                  <ListItem
+                    label="DSCR"
+                    value={
+                      journey.rmPackage?.summary?.dscr != null
+                        ? journey.rmPackage.summary.dscr.toFixed(2)
+                        : '—'
+                    }
+                  />
                   <ListItem
                     label="Debt capacity"
-                    value={currencyFormatter.format(softmaxJourney.rmPackage.summary.debtCapacity)}
+                    value={
+                      journey.rmPackage?.summary?.debtCapacity != null
+                        ? currencyFormatter.format(journey.rmPackage.summary.debtCapacity)
+                        : '—'
+                    }
                   />
                 </dl>
                 <div className="journey-tags">
-                  {softmaxJourney.rmPackage.summary.riskHighlights.map((note, index) => (
+                  {(journey.rmPackage?.summary?.riskHighlights ?? []).map((note, index) => (
                     <span key={note} className="journey-tag journey-card--animate" style={{ animationDelay: `${0.3 + index * 0.06}s` }}>
                       {note}
                     </span>
@@ -796,7 +1166,7 @@ export default function JourneyDemo() {
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.32s' }}>
                 <h3 className="journey-card__title">Next actions</h3>
                 <ul className="journey-next-actions">
-                  {softmaxJourney.rmPackage.summary.nextActions.map((task, index) => (
+                  {(journey.rmPackage?.summary?.nextActions ?? []).map((task, index) => (
                     <li key={task} className="journey-card--animate" style={{ animationDelay: `${0.4 + index * 0.08}s` }}>
                       {task}
                     </li>
@@ -814,7 +1184,7 @@ export default function JourneyDemo() {
 
       {stageVisible('analytics') && (
         <section ref={assignStageRef.analytics} className="journey-section journey-section--animated" aria-live="polite">
-          <SectionHeader title="9. Analytics & observability" subtitle="Funnel, SLA, collector health, and exception alerts" />
+          <SectionHeader title="10. Analytics & observability" subtitle="Funnel, SLA, collector health, and exception alerts" />
           {stageState('analytics') !== 'complete' ? (
             <StageLoading stage="analytics" />
           ) : (
@@ -822,7 +1192,7 @@ export default function JourneyDemo() {
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.18s' }}>
                 <h3 className="journey-card__title">Weekly metrics</h3>
                 <ul className="journey-metrics">
-                  {softmaxJourney.analytics.metrics.map((metric, index) => (
+                  {(journey.analytics?.metrics ?? []).map((metric, index) => (
                     <li key={metric.id} className="journey-card--animate" style={{ animationDelay: `${0.28 + index * 0.08}s` }}>
                       <div>
                         <strong>{metric.label}</strong>
@@ -835,10 +1205,13 @@ export default function JourneyDemo() {
                 <div className="journey-funnel journey-card--animate" style={{ animationDelay: '0.5s' }}>
                   <header>
                     <strong>Funnel snapshot</strong>
-                    <span>Updated {dateFormatter.format(new Date(softmaxJourney.analytics.updatedAt))}</span>
+                    <span>
+                      Updated{' '}
+                      {journey.analytics?.updatedAt ? dateFormatter.format(new Date(journey.analytics.updatedAt)) : '—'}
+                    </span>
                   </header>
                   <ul>
-                    {softmaxJourney.analytics.funnel.map((stage) => (
+                    {(journey.analytics?.funnel ?? []).map((stage) => (
                       <li key={stage.stage}>
                         <span>{stage.stage}</span>
                         <strong>{stage.count}</strong>
@@ -850,7 +1223,7 @@ export default function JourneyDemo() {
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.32s' }}>
                 <h3 className="journey-card__title">Alerts & resilience</h3>
                 <ul className="journey-alerts">
-                  {softmaxJourney.analytics.alerts.map((alert, index) => (
+                  {(journey.analytics?.alerts ?? []).map((alert, index) => (
                     <li
                       key={alert.id}
                       className={`journey-alert journey-card--animate ${severityClass[alert.severity] || ''}`}
@@ -871,7 +1244,7 @@ export default function JourneyDemo() {
 
       {stageVisible('security') && (
         <section ref={assignStageRef.security} className="journey-section journey-section--animated" aria-live="polite">
-          <SectionHeader title="10. Security & immutable audit" subtitle="RBAC, mTLS, KMS, hash chained events" />
+          <SectionHeader title="11. Security & immutable audit" subtitle="RBAC, mTLS, KMS, hash chained events" />
           {stageState('security') !== 'complete' ? (
             <StageLoading stage="security" />
           ) : (
@@ -879,7 +1252,7 @@ export default function JourneyDemo() {
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.2s' }}>
                 <h3 className="journey-card__title">RBAC & encryption</h3>
                 <ul className="journey-rbac">
-                  {softmaxJourney.security.rbacRoles.map((role, index) => (
+                  {(journey.security?.rbacRoles ?? []).map((role, index) => (
                     <li key={role.role} className="journey-card--animate" style={{ animationDelay: `${0.28 + index * 0.08}s` }}>
                       <strong>{role.role}</strong>
                       <span>{role.permissions.join(', ')}</span>
@@ -887,14 +1260,14 @@ export default function JourneyDemo() {
                   ))}
                 </ul>
                 <dl className="journey-list">
-                  <ListItem label="mTLS" value={softmaxJourney.security.encryption.transit} />
-                  <ListItem label="Encryption at rest" value={softmaxJourney.security.encryption.atRest} />
+                  <ListItem label="mTLS" value={journey.security?.encryption?.transit ?? '—'} />
+                  <ListItem label="Encryption at rest" value={journey.security?.encryption?.atRest ?? '—'} />
                 </dl>
               </div>
               <div className="journey-card journey-card--animate" style={{ animationDelay: '0.34s' }}>
                 <h3 className="journey-card__title">Immutable audit log</h3>
                 <ul className="journey-audit">
-                  {softmaxJourney.auditLog.map((entry, index) => (
+                  {(journey.auditLog ?? []).map((entry, index) => (
                     <li key={entry.id} className="journey-card--animate" style={{ animationDelay: `${0.42 + index * 0.08}s` }}>
                       <div>
                         <strong>{entry.action}</strong>
@@ -905,7 +1278,9 @@ export default function JourneyDemo() {
                     </li>
                   ))}
                 </ul>
-                <p className="journey-card__footnote">Merkle seal: {softmaxJourney.security.audit.lastSeal} (SHA3-256)</p>
+                <p className="journey-card__footnote">
+                  Merkle seal: {journey.security?.audit?.lastSeal ?? '—'} (SHA3-256)
+                </p>
               </div>
             </div>
           )}
@@ -959,4 +1334,258 @@ function StageLoading({ stage }) {
       </span>
     </div>
   )
+}
+
+function buildIndividualJourneyDemo(source) {
+  const submittedAt = source.loanApplication.submittedAt
+  const borrower = source.loanApplication.primaryBorrower
+  const shiftBy = (minutes) => addMinutesToIso(submittedAt, minutes)
+
+  const lead = {
+    leadId: 'lead-individual-20250704-001',
+    channel: source.loanApplication.source === 'portal_submission' ? 'Portal' : 'Branch',
+    createdAt: submittedAt,
+    contact: {
+      name: `${borrower.name}`,
+      title: 'Micro business owner',
+      phone: borrower.phone,
+      email: borrower.email,
+    },
+    productsSuggested: ['Micro 36m', 'Pension-backed top-up'],
+    chatbotTranscript: [
+      {
+        id: 'ind-msg-1',
+        actor: 'assistant',
+        content: 'Сайн байна уу? Таны санхүүжилтийн зорилго, дүн, хугацааг оруулна уу.',
+        timestamp: submittedAt,
+      },
+      {
+        id: 'ind-msg-2',
+        actor: 'user',
+        content: 'Орон сууцны үлдэгдэл ₮101сая, 36 сар. Хувиараа оёдол хийдэг.',
+        timestamp: shiftBy(2),
+      },
+      {
+        id: 'ind-msg-3',
+        actor: 'assistant',
+        content: 'Баталгаажсан зөвшөөрөл өгснөөр төрийн мэдээллийн сангаас шалгана.',
+        timestamp: shiftBy(3),
+      },
+    ],
+  }
+
+  const consentScopes = source.governmentData.items.map((item, index) => ({
+    scope: item.id,
+    label: item.name,
+    status: item.status === 'parsed' ? 'granted' : item.status,
+    proof: `/mock/consent/${item.id}.pdf`,
+    capturedAt: shiftBy(5 + index),
+  }))
+
+  const consents = {
+    consentId: 'consent-individual-20250704-001',
+    grantedAt: shiftBy(4),
+    expiresAt: addMinutesToIso(submittedAt, 60 * 24 * 90),
+    scopes: consentScopes,
+  }
+
+  const stateMachine = [
+    { id: 'PORTAL_SUBMITTED', label: 'Portal submission received', reachedAt: submittedAt, status: 'complete' },
+    { id: 'CONSENT_HASHED', label: 'Citizen consent hashed', reachedAt: shiftBy(4), status: 'complete' },
+    { id: 'GOV_DATA', label: 'Gov data fetched', reachedAt: shiftBy(8), status: 'complete' },
+    { id: 'DOCS_SYNC', label: 'Portal docs ingested', reachedAt: shiftBy(24), status: 'complete' },
+    { id: 'CROSSCHECK', label: 'Cross-checks executed', reachedAt: shiftBy(62), status: 'complete' },
+    { id: 'RM_HANDOFF', label: 'Decline + coaching tips', reachedAt: source.rmPackage.generatedAt, status: 'complete' },
+  ]
+
+  const orchestrator = {
+    accuracyScore: source.crossChecks.accuracyScore,
+    completenessScore: 0.92,
+    currentState: 'RM_HANDOFF',
+    startedAt: submittedAt,
+    completedAt: source.rmPackage.generatedAt,
+    stateMachine,
+    events: [
+      {
+        type: 'portal.submitted',
+        at: submittedAt,
+        actor: 'portal',
+        detail: 'Батзаяа портал дээр хүсэлтээ ирүүлэв.',
+      },
+      {
+        type: 'consent.captured',
+        at: shiftBy(4),
+        actor: 'consent-vault',
+        detail: 'Иргэний лавлагааны зөвшөөрөл хэшлэгдэв.',
+      },
+      {
+        type: 'collector.gov',
+        at: shiftBy(8),
+        actor: 'collector.gov',
+        detail: 'Эд хөрөнгө, хаяг, гэрлэлтийн мэдээлэл татав.',
+      },
+      {
+        type: 'document.uploaded',
+        at: shiftBy(24),
+        actor: 'portal',
+        detail: 'Хоёр банкны хуулга, түрээсийн гэрээ OCR-д орлоо.',
+      },
+      {
+        type: 'crosscheck.run',
+        at: shiftBy(62),
+        actor: 'crosscheck-service',
+        detail: 'Portal vs gov vs банкны мэдээллийг тулгав.',
+      },
+      {
+        type: 'rm.package',
+        at: source.rmPackage.generatedAt,
+        actor: 'packager',
+        detail: 'Decline шийдвэртэй RM багц үүсэв.',
+      },
+    ],
+  }
+
+  const evidenceCollectors = [
+    ...source.governmentData.items.map((item, index) => ({
+      id: item.id,
+      label: item.name,
+      confidence: item.confidence ?? 0.95,
+      capturedAt: shiftBy(6 + index),
+      status: item.status === 'parsed' ? 'passed' : item.status,
+      checksum: `${item.id}-gov-hash`,
+      parsedFields: item.parsedFields,
+      rawProof: { type: 'json', uri: `/mock/evidence/${item.id}.json` },
+    })),
+    ...source.submittedData.items.map((item, index) => ({
+      id: item.id,
+      label: item.name,
+      confidence: item.confidence ?? 0.9,
+      capturedAt: shiftBy(20 + index * 3),
+      status: item.status ?? 'verified',
+      checksum: `${item.id}-portal-hash`,
+      parsedFields: item.claimedFields ?? item.parsedFields ?? item.verification ?? {},
+      rawProof: { type: 'pdf', uri: `/mock/portal/${item.id}.pdf` },
+    })),
+  ]
+
+  const checklist = {
+    assignedAt: shiftBy(12),
+    items: [
+      { id: 'portal-form', label: 'Portal digitized form', required: true, status: 'uploaded' },
+      { id: 'gov-fetch', label: 'Gov registry snapshot', required: true, status: 'synced' },
+      { id: 'bank-statements', label: '2 банкны хуулга (6 сар)', required: true, status: 'uploaded' },
+      { id: 'rent-contract', label: 'Түрээсийн гэрээ OCR', required: true, status: 'uploaded' },
+      { id: 'inventory', label: 'Бараа материалын формууд', required: false, status: 'pending' },
+      { id: 'co-borrower', label: 'Хамтран зээлдэгчийн мэдээлэл', required: true, status: 'pending' },
+    ],
+  }
+
+  const uploads = source.submittedData.items.map((item, index) => ({
+    id: item.id,
+    name: item.name,
+    class: inferDocClass(item.id),
+    sizeMb: Number((0.8 + index * 0.25).toFixed(1)),
+    uploadedAt: shiftBy(20 + index * 3),
+    ocr: { confidence: item.ocr?.confidence ?? item.confidence ?? 0.88 },
+  }))
+
+  const crossChecks = {
+    ...source.crossChecks,
+    results: source.crossChecks.results.map((item, index) => ({
+      ...item,
+      variance: item.variance ?? [0.28, 0.41, 0.33, 0.37, 0.22, 0.05, 0.01, 0][index] ?? 0.2,
+    })),
+  }
+
+  const analytics = {
+    updatedAt: source.rmPackage.generatedAt,
+    funnel: [
+      { stage: 'Portal', count: 32 },
+      { stage: 'Consent', count: 28 },
+      { stage: 'Gov Sync', count: 26 },
+      { stage: 'Docs Complete', count: 14 },
+      { stage: 'RM Handoff', count: 6 },
+    ],
+    metrics: [
+      { id: 'turnaround', label: 'Portal → RM turnaround', value: '29 мин', delta: '+12%' },
+      { id: 'gov-hit', label: 'Gov fetch success', value: '100%', delta: '+3%' },
+      { id: 'doc-confidence', label: 'OCR ≥0.85 confidence', value: '87%', delta: '-4%' },
+      { id: 'manual-review', label: 'Manual review rate', value: '18%', delta: '+5%' },
+    ],
+    alerts: [
+      {
+        id: 'income-gap',
+        severity: 'high',
+        message: 'Portal орлогын мэдүүлэг gov/банк баталгаанаас 25x өндөр байна.',
+        openedAt: shiftBy(70),
+      },
+      {
+        id: 'statement-delay',
+        severity: 'medium',
+        message: 'ХААН банкны хуулга татах Playwright 2 минут удаашрав.',
+        openedAt: shiftBy(26),
+      },
+    ],
+  }
+
+  const auditLog = [
+    {
+      id: 'audit-ind-001',
+      at: submittedAt,
+      actor: 'portal',
+      action: 'Portal submission stored',
+      hash: 'batzayaa-portal-001-hash',
+    },
+    {
+      id: 'audit-ind-002',
+      at: shiftBy(4),
+      actor: 'consent-vault',
+      action: 'Citizen consent hashed',
+      hash: 'batzayaa-consent-002-hash',
+    },
+    {
+      id: 'audit-ind-003',
+      at: shiftBy(20),
+      actor: 'document-service',
+      action: 'Bank statement OCR complete',
+      hash: 'batzayaa-doc-003-hash',
+    },
+    {
+      id: 'audit-ind-004',
+      at: source.rmPackage.generatedAt,
+      actor: 'packager',
+      action: 'RM package generated',
+      hash: 'batzayaa-rm-004-hash',
+    },
+  ]
+
+  return {
+    ...source,
+    lead,
+    consents,
+    orchestrator,
+    evidence: { collectors: evidenceCollectors },
+    checklist,
+    documents: { uploads },
+    crossChecks,
+    analytics,
+    auditLog,
+  }
+}
+
+function addMinutesToIso(isoString, minutes) {
+  const base = new Date(isoString)
+  if (Number.isNaN(base.getTime())) return isoString
+  base.setMinutes(base.getMinutes() + minutes)
+  return base.toISOString()
+}
+
+function inferDocClass(id) {
+  if (id.includes('bank')) return 'bank_statement'
+  if (id.includes('rent')) return 'contract'
+  if (id.includes('img')) return 'photo'
+  if (id.includes('inv')) return 'inventory'
+  if (id.includes('meta')) return 'certificate'
+  if (id.includes('app')) return 'application'
+  return 'document'
 }

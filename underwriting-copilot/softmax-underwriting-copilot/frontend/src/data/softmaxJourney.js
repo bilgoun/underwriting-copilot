@@ -308,7 +308,7 @@ export const softmaxJourney = {
       },
       {
         id: 'tax',
-        label: 'Татварын тайлан (E-invoice + GDT)',
+        label: 'Татварын тайлан (Ebarimt + GDT)',
         confidence: 0.92,
         capturedAt: '2025-01-27T14:42:03+08:00',
         status: 'passed',
@@ -399,7 +399,7 @@ export const softmaxJourney = {
       rejectedProducts: [
         {
           id: 'invoice',
-          reason: 'E-invoice борлуулалтын 62% нь давтагдах худалдан авагчтай. Концентрацийн эрсдэл.',
+          reason: 'Ebarimt борлуулалтын 62% нь давтагдах худалдан авагчтай. Концентрацийн эрсдэл.',
         },
       ],
     },
@@ -412,7 +412,7 @@ export const softmaxJourney = {
       { id: 'financials-2022', label: '2022 оны аудитлагдсан санхүүгийн тайлан', required: true, status: 'uploaded' },
       { id: 'financials-2023', label: '2023 оны аудитлагдсан санхүүгийн тайлан', required: true, status: 'uploaded' },
       { id: 'bank-statements', label: 'Банкны хуулга (12 сар)', required: true, status: 'uploaded' },
-      { id: 'tax-returns', label: 'Татварын тайлан, e-invoice тайлан', required: true, status: 'uploaded' },
+      { id: 'tax-returns', label: 'Татварын тайлан, ebarimt тайлан', required: true, status: 'uploaded' },
       { id: 'payroll', label: 'НДШ тайлан', required: true, status: 'uploaded' },
       {
         id: 'projection',
