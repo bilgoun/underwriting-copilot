@@ -24,7 +24,273 @@ const translateGroupLabel = (groupKey) => {
   return dictionary[groupKey] ?? groupKey
 }
 
-const formatCurrency = (value) => `₮${value.toLocaleString('en-US')}`
+const loanQuestionSections = [
+  {
+    title: '1. Зээлийн мэдээлэл',
+    fields: [
+      { id: 'loan-type', label: 'Зээлийн төрөл' },
+      { id: 'loan-interest', label: 'Зээлийн хүү (сарын)' },
+      { id: 'loan-purpose', label: 'Зээлийн зориулалт' },
+      { id: 'loan-term', label: 'Зээлийн хугацаа (сараар)' },
+      { id: 'loan-amount-number', label: 'Хүсч буй зээлийн хэмжээ (тоогоор)' },
+      { id: 'loan-amount-text', label: 'Хүсч буй зээлийн хэмжээ (үсгээр)' },
+      {
+        id: 'loan-frequency',
+        label: 'Зээл төлөх давтамж',
+        details: 'Сард 1 удаа, Сард 2 удаа',
+      },
+      {
+        id: 'repayment-schedule',
+        label: 'Зээлийн төлбөрийн хуваарь хэрхэн үүсгэх',
+        details: 'Нийт төлбөр тэнцүү төлөлттэй, Үндсэн зээлийн тэнцүү төлөлттэй',
+      },
+    ],
+  },
+  {
+    title: '2. Зээлдэгчийн үндсэн мэдээлэл',
+    groups: [
+      {
+        id: 'primary-borrower',
+        title: 'Үндсэн зээлдэгч',
+        fields: [
+          { id: 'primary-lineage', label: 'Ургийн овог' },
+          { id: 'primary-parent-name', label: 'Эцэг эхийн нэр' },
+          { id: 'primary-name', label: 'Нэр' },
+          { id: 'primary-registration', label: 'Регистр / Иргэний бүртгэлийн дугаар' },
+          { id: 'primary-gender', label: 'Хүйс' },
+          { id: 'primary-phone', label: 'Гар утасны дугаар' },
+          { id: 'primary-email', label: 'Цахим шуудан' },
+          { id: 'primary-address', label: 'Оршин суугаа хаяг' },
+          { id: 'primary-duration', label: 'Оршин сууж буй хугацаа (жилээр)' },
+          {
+            id: 'primary-ownership',
+            label: 'Эзэмшлийн төрөл',
+            details: 'Өмчлөгч, Түрээслэгч, Эцэг эхийн хамт, Бусад',
+          },
+          {
+            id: 'primary-education',
+            label: 'Боловсрол / мэргэжил',
+            details: 'Бүрэн дунд, Бүрэн бус дунд, Дээд, Мэргэжлийн сургууль, Бусад',
+          },
+          { id: 'primary-school', label: 'Төгссөн сургууль' },
+          { id: 'primary-major', label: 'Мэргэжил' },
+        ],
+      },
+      {
+        id: 'co-borrower',
+        title: 'Хамтран зээлдэгч',
+        fields: [
+          { id: 'co-lineage', label: 'Ургийн овог' },
+          { id: 'co-parent-name', label: 'Эцэг эхийн нэр' },
+          { id: 'co-name', label: 'Нэр' },
+          { id: 'co-registration', label: 'Регистр / Иргэний бүртгэлийн дугаар' },
+          { id: 'co-gender', label: 'Хүйс' },
+          { id: 'co-phone', label: 'Гар утасны дугаар' },
+          { id: 'co-email', label: 'Цахим шуудан' },
+          { id: 'co-address', label: 'Оршин суугаа хаяг' },
+          { id: 'co-duration', label: 'Оршин сууж буй хугацаа (жилээр)' },
+          {
+            id: 'co-ownership',
+            label: 'Эзэмшлийн төрөл',
+            details: 'Өмчлөгч, Түрээслэгч, Эцэг эхийн хамт, Бусад',
+          },
+          {
+            id: 'co-education',
+            label: 'Боловсрол / мэргэжил',
+            details: 'Бүрэн дунд, Бүрэн бус дунд, Дээд, Мэргэжлийн сургууль, Бусад',
+          },
+          { id: 'co-school', label: 'Төгссөн сургууль' },
+          { id: 'co-major', label: 'Мэргэжил' },
+        ],
+      },
+    ],
+  },
+  {
+    title: '3. Гэр бүлийн байдал',
+    groups: [
+      {
+        id: 'primary-family',
+        title: 'Үндсэн зээлдэгч',
+        fields: [
+          { id: 'primary-family-size', label: 'Ам бүлийн тоо' },
+          {
+            id: 'primary-marital-status',
+            label: 'Гэр бүлийн байдал',
+            details: 'Гэрлэсэн, Гэрлээгүй, Бусад',
+          },
+          {
+            id: 'primary-family-table',
+            label: 'Гэр бүлийн гишүүдийн мэдээллийн хүснэгт',
+            details:
+              'Баганын толгой: Таны хэн болох, Овог нэр, Регистрийн дугаар, Эрхэлдэг ажил/сургууль, Сарын орлого, Утасны дугаар',
+          },
+        ],
+      },
+      {
+        id: 'co-family',
+        title: 'Хамтран зээлдэгч',
+        fields: [
+          { id: 'co-family-size', label: 'Ам бүлийн тоо' },
+          {
+            id: 'co-marital-status',
+            label: 'Гэр бүлийн байдал',
+            details: 'Гэрлэсэн, Гэрлээгүй, Бусад',
+          },
+          {
+            id: 'co-family-table',
+            label: 'Гэр бүлийн гишүүдийн мэдээллийн хүснэгт',
+            details:
+              'Баганын толгой: Таны хэн болох, Овог нэр, Регистрийн дугаар, Эрхэлдэг ажил/сургууль, Сарын орлого, Утасны дугаар',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: '4. Ажил эрхлэлтийн мэдээлэл',
+    groups: [
+      {
+        id: 'primary-employment',
+        title: 'Үндсэн зээлдэгч',
+        fields: [
+          { id: 'primary-employer', label: 'Одоогийн ажил олгогч байгууллагын нэр' },
+          { id: 'primary-employer-phone', label: 'Утасны дугаар' },
+          { id: 'primary-employer-size', label: 'Нийт ажилтны тоо' },
+          { id: 'primary-additional-staff', label: 'Нийт нэмэлтээр оролцсон хүн/ажилчдын тоо' },
+          {
+            id: 'primary-hiring-trend',
+            label: 'Сүүлийн 5 жилийн хугацаанд нэмэлтээр ажилд орсон хүний тоо',
+          },
+          {
+            id: 'primary-employment-history',
+            label: 'Хөдөлмөр эрхлэлтийн түүхийн хүснэгт',
+            details: 'Байгууллагын нэр, Албан тушаал, Ажилласан хугацаа',
+          },
+        ],
+      },
+      {
+        id: 'co-employment',
+        title: 'Хамтран зээлдэгч',
+        fields: [
+          { id: 'co-employer', label: 'Одоогийн ажил олгогч байгууллагын нэр' },
+          { id: 'co-employer-address', label: 'Ажил олгогч байгууллагын хаяг' },
+          { id: 'co-employer-phone', label: 'Утасны дугаар' },
+          { id: 'co-employer-size', label: 'Нийт ажилтны тоо' },
+          { id: 'co-working-years', label: 'Нийт хөдөлмөр эрхэлсэн хугацаа (жилээр)' },
+          {
+            id: 'co-employment-history',
+            label: 'Сүүлийн 5 жилийн хөдөлмөр эрхлэлтийн түүхийн хүснэгт',
+            details: 'Байгууллагын нэр, Албан тушаал, Ажилласан хугацаа',
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: '5. Хөрөнгө санхүүгийн мэдээлэл',
+    fields: [
+      {
+        id: 'income-sources',
+        label: 'Зээл эргүүлэн төлөх эх үүсвэр',
+        details: 'Цалингийн орлого, Бизнесийн орлого, Тэтгэврийн орлого, Бусад орлого',
+      },
+      {
+        id: 'income-table',
+        label: 'Орлогын төрөл ба сарын дүнгийн хүснэгт',
+        details: 'Өөрийн орлого болон хамтран зээлдэгч/өрхийн гишүүний орлогын багана',
+      },
+      {
+        id: 'expense-table',
+        label: 'Зардлын төрөл ба сарын дүнгийн хүснэгт',
+        details: 'Хүнсний зардал, Ахуйн хэрэглээний зардал, Ашиглалтын зардал, Бусад',
+      },
+      { id: 'totals', label: 'Нийт орлого ба нийт зардлын тооцоо' },
+    ],
+  },
+  {
+    title: '6. Бусад банк, санхүүгийн байгууллагын зээл',
+    fields: [
+      {
+        id: 'other-loans-flag',
+        label: 'Бусад газарт зээлтэй эсэх',
+        details: 'Сонголт: Тийм / Үгүй',
+      },
+      {
+        id: 'other-loans-table',
+        label: 'Зээлтэй байгууллагын жагсаалт',
+        details: 'Банк, зээлийн төрөл, үлдэгдэл, дуусах хугацаа, сарын төлөлт',
+      },
+    ],
+  },
+  {
+    title: '7. Эзэмшдэг хөрөнгийн мэдээлэл',
+    fields: [
+      { id: 'asset-type', label: 'Хөрөнгийн төрөл' },
+      { id: 'asset-doc', label: 'Гэрчилгээ, регистр, дансны дугаар' },
+      { id: 'asset-location', label: 'Байршил' },
+      { id: 'asset-value', label: 'Харилцагчийн өөрийн үнэлгээ (төгрөгөөр)' },
+      {
+        id: 'asset-usage',
+        label: 'Түрээслүүлсэн эсэх / үнэ төлбөргүй ашиглуулсан эсэх / бусад шаардах эрх',
+      },
+      { id: 'asset-pledge', label: 'Тус зээлд барьцаалах эсэх' },
+    ],
+  },
+  {
+    title: '8. Зээлээр санхүүжүүлэх автомашины мэдээлэл',
+    description: 'Зөвхөн автомашины зээлийн үед бөглөнө.',
+    fields: [
+      { id: 'car-plate', label: 'Автомашины марк, улсын дугаар' },
+      { id: 'car-year', label: 'Үйлдвэрлэсэн он' },
+      { id: 'car-import-date', label: 'Монголд орж ирсэн огноо' },
+      { id: 'car-price', label: 'Худалдан авах үнийн дүн' },
+      { id: 'car-down-payment', label: 'Урьдчилгаа төлбөрийн дүн' },
+    ],
+  },
+  {
+    title: '9. Нэмэлт мэдээлэл',
+    fields: [
+      {
+        id: 'emergency-contact',
+        label: 'Тантай холбоо барьж чадахгүй тохиолдолд мэдээлэл дамжуулах хүн',
+        details: 'Таны хэн болох, Овог нэр, Эрхэлдэг ажил/сургууль, Утасны дугаар',
+      },
+    ],
+  },
+  {
+    title: '10. Нийгмийн хариуцлага',
+    fields: [
+      {
+        id: 'waste-disposal',
+        label: 'Ахуйн хогоо хогийн төвлөрсөн цэгт хаядаг эсэх',
+        details: 'Тийм / Үгүй',
+      },
+      { id: 'garbage-fee', label: 'Сар бүр хогны мөнгө төлдөг эсэх', details: 'Тийм / Үгүй' },
+      {
+        id: 'education-duty',
+        label: 'Сургуулийн насны хүүхдээ ерөнхий боловсролын сургуульд сургадаг эсэх',
+        details: 'Тийм / Үгүй',
+      },
+      {
+        id: 'social-commitment',
+        label: 'Бид энэхүү хүсэлтэд өгсөн мэдээлэл үнэн зөв, бүрэн болохыг баталж байна.',
+        details: 'Гар бичмэл баталгаа бичих хэсэг',
+      },
+    ],
+  },
+  {
+    title: '11. Баталгаа ба тоон гарын үсэг',
+    fields: [
+      {
+        id: 'declaration',
+        label: 'Бид энэхүү хүсэлтэд өгсөн мэдээлэл үнэн зөв, бүрэн болохыг баталж байна.',
+      },
+      { id: 'primary-signature', label: 'Үндсэн зээлдэгчийн гарын үсэг' },
+      { id: 'co-signature', label: 'Хамтран зээлдэгчийн гарын үсэг' },
+      { id: 'signature-date', label: 'Огноо' },
+    ],
+  },
+]
 
 export default function LoanApplication() {
   const location = useLocation()
@@ -72,7 +338,14 @@ export default function LoanApplication() {
     return requirementItemIds.every((id) => checkedRequirements.includes(id))
   }, [requirementItemIds, checkedRequirements])
 
-  const totalSteps = 4
+  const questionnaireSections = loanQuestionSections
+  const totalSteps = 1 + questionnaireSections.length
+  const isRequirementsStep = step === 1
+  const currentQuestionSectionIndex = step - 2
+  const currentQuestionSection =
+    !isRequirementsStep && currentQuestionSectionIndex >= 0
+      ? questionnaireSections[currentQuestionSectionIndex] ?? null
+      : null
 
   useEffect(() => {
     setStep(1)
@@ -95,19 +368,6 @@ export default function LoanApplication() {
       }
       if (stepMessages.length) {
         messages.requirements = stepMessages.join(' ')
-      }
-    }
-
-    if (currentStep === 2) {
-      if (!form.fullName.trim()) messages.fullName = 'Нэрээ оруулна уу'
-      if (!form.companyName.trim()) messages.companyName = 'Компанийн нэрээ оруулна уу'
-      if (!form.email.trim()) messages.email = 'И-мэйлээ оруулна уу'
-      if (!form.phone.trim()) messages.phone = 'Утасны дугаар оруулна уу'
-    }
-
-    if (currentStep === 3) {
-      if (!form.fundingPurpose.trim()) {
-        messages.fundingPurpose = 'Санхүүжилтийн зорилгоо тайлбарлана уу'
       }
     }
 
@@ -143,13 +403,30 @@ export default function LoanApplication() {
     })
   }
 
-  const handleChange = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }))
-  }
-
   const toggleRequirement = (id) => {
     setCheckedRequirements((prev) =>
       prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id],
+    )
+  }
+
+  const renderFields = (fields) => {
+    if (!fields?.length) return null
+    return (
+      <ul className="loan-application__question-list">
+        {fields.map((field) => (
+          <li key={field.id} className="loan-application__question-item">
+            <strong>{field.label}</strong>
+            {field.details && <p>{field.details}</p>}
+            {field.subFields && (
+              <ul className="loan-application__question-sublist">
+                {field.subFields.map((subField, index) => (
+                  <li key={`${field.id}-${index}`}>{subField}</li>
+                ))}
+              </ul>
+            )}
+          </li>
+        ))}
+      </ul>
     )
   }
 
@@ -230,88 +507,24 @@ export default function LoanApplication() {
             </div>
           )}
 
-          {step === 2 && (
-            <div className="loan-application__form">
-              <label className="loan-application__field">
-                <span>Таны нэр</span>
-                <input
-                  type="text"
-                  value={form.fullName}
-                  onChange={(event) => handleChange('fullName', event.target.value)}
-                  placeholder="Овог Нэр"
-                />
-                {errors.fullName && <small>{errors.fullName}</small>}
-              </label>
-
-              <label className="loan-application__field">
-                <span>Компанийн нэр</span>
-                <input
-                  type="text"
-                  value={form.companyName}
-                  onChange={(event) => handleChange('companyName', event.target.value)}
-                  placeholder="Компанийн бүртгэлтэй нэр"
-                />
-                {errors.companyName && <small>{errors.companyName}</small>}
-              </label>
-
-              <div className="loan-application__field-group">
-                <label className="loan-application__field">
-                  <span>И-мэйл</span>
-                  <input
-                    type="email"
-                    value={form.email}
-                    onChange={(event) => handleChange('email', event.target.value)}
-                    placeholder="name@email.com"
-                  />
-                  {errors.email && <small>{errors.email}</small>}
-                </label>
-                <label className="loan-application__field">
-                  <span>Утас</span>
-                  <input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(event) => handleChange('phone', event.target.value)}
-                    placeholder="+976 8000-0000"
-                  />
-                  {errors.phone && <small>{errors.phone}</small>}
-                </label>
+          {!isRequirementsStep && currentQuestionSection && (
+            <div className="loan-application__questionnaire">
+              <div className="loan-application__step-counter">
+                Алхам {Math.max(step - 1, 1)} / {Math.max(totalSteps - 1, 1)}
               </div>
-            </div>
-          )}
-
-          {step === 3 && (
-            <div className="loan-application__form">
-              <label className="loan-application__field">
-                <span>Санхүүжилт юунд зориулагдах вэ?</span>
-                <textarea
-                  value={form.fundingPurpose}
-                  onChange={(event) => handleChange('fundingPurpose', event.target.value)}
-                  placeholder="Жишээ нь: шинэ тоног төхөөрөмж авах, бараа татах гэх мэт"
-                  rows={6}
-                />
-                {errors.fundingPurpose && <small>{errors.fundingPurpose}</small>}
-              </label>
-            </div>
-          )}
-
-          {step === 4 && (
-            <div className="loan-application__form loan-application__form--slider">
-              <span>Танд хэдийн хэмжээний зээл хэрэгтэй вэ?</span>
-              <div className="loan-application__slider">
-                <input
-                  type="range"
-                  min="10000000"
-                  max="500000000"
-                  step="1000000"
-                  value={form.amount}
-                  onChange={(event) => handleChange('amount', Number(event.target.value))}
-                />
-                <div className="loan-application__slider-values">
-                  <span>₮10,000,000</span>
-                  <strong>{formatCurrency(form.amount)}</strong>
-                  <span>₮500,000,000</span>
+              <section key={currentQuestionSection.title} className="loan-application__question-section">
+                <div className="loan-application__question-section-header">
+                  <h2>{currentQuestionSection.title}</h2>
+                  {currentQuestionSection.description && <p>{currentQuestionSection.description}</p>}
                 </div>
-              </div>
+                {renderFields(currentQuestionSection.fields)}
+                {currentQuestionSection.groups?.map((group) => (
+                  <div key={group.id} className="loan-application__question-group">
+                    <h3>{group.title}</h3>
+                    {renderFields(group.fields)}
+                  </div>
+                ))}
+              </section>
             </div>
           )}
 
